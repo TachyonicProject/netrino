@@ -1,17 +1,7 @@
-=========================
-Tachyonic Project Netrino
-=========================
-
-Quick links
------------
-
-* `Website <http://www.tachyonic.org/>`__.
-* `Documentation <http://www.tachyonic.org/sphinx/netrino>`__.
-
 Installation
-------------
+============
 
-Tachyonic Project Netrino currently fully supports `CPython <https://www.python.org/downloads/>`__ 3.6.
+Tachyonic Project netrino currently fully supports `CPython <https://www.python.org/downloads/>`__ 3.6.
 
 
 CPython
@@ -40,7 +30,7 @@ the cythonized netrino framework with the system's default C compiler.
 Source Code
 -----------
 
-Tachyonic Project Netrino infrastructure and code is hosted on `GitHub <https://github.com/TachyonicProject/netrino>`_.
+Tachyonic Project netrino infrastructure and code is hosted on `GitHub <https://github.com/TachyonicProject/netrino>`_.
 Making the code easy to browse, download, fork, etc. Pull requests are always
 welcome!
 
