@@ -1,0 +1,12 @@
+{% extends "photonic/base.html" %}
+{% block content %}
+test test<BR>
+response from API: {{ api_reply }}
+<BR><BR>
+<form method="post">
+    <input type="text" name="test" value="">
+    <input type="submit" value='Submit'>
+</form>
+local form: {{ form }}
+remote form back from api: {{ form_reply }}
+{% endblock %}

@@ -1,0 +1,23 @@
+{
+    "role:root": "'Root' in req.token.roles",
+    "role:ops": "'Operations' in req.token.roles",
+    "role:admin": "'Administrator' in req.token.roles",
+    "role:support": "'Support' in req.token.roles",
+    "role:accounts": "'Account Manager' in req.token.roles",
+    "role:billing": "'Billing' in req.token.roles",
+    "role:customer": "'Customer' in req.token.roles",
+    "login": "req.token.authenticated is True",
+    "admin": "$role:root or $role:ops or $role:admin",
+    "users:admin": "$role:root or $role:ops or $role:admin or $role:support",
+    "users:view": "$users:admin",
+    "roles:admin": "$role:root",
+    "roles:view": "$roles:admin",
+    "domains:admin": "$role:root",
+    "domains:view": "$domains:admin",
+    "tenants:admin": "$role:root or $role:ops or $role:admin or $role:support or $role:billing or $role:accounts or $role:billing",
+    "tenants:view": "$tenants:admin",
+    "services:admin": "$login",
+    "services:view": "$login",
+    "billing:admin": "$role:root or $role:billing",
+    "billing:users": "$login"
+}
