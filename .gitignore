@@ -2,7 +2,7 @@ TODO.txt
 TODO
 .venv
 venv
-test.db
+*.db
 
 #####=== Archives ===#####
 ## It's better to unpack these files and commit the raw source because
