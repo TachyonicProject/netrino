@@ -1,0 +1,2 @@
+https://github.com/TachyonicProject/luxon/tarball/latest#egg=luxon
+https://github.com/TachyonicProject/psychokinetic/tarball/latest#egg=psychokinetic
