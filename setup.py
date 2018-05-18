@@ -267,6 +267,7 @@ setup_dict = dict(
     author_email=metadata.email,
     maintainer=metadata.author,
     maintainer_email=metadata.email,
+    license=metadata.license,
     url=metadata.url,
     description=metadata.description,
     long_description=read('README.rst'),
@@ -282,7 +283,7 @@ setup_dict = dict(
     zip_safe=False,  # don't use eggs
     # entry_points={
     #    'console_scripts': [
-    #        'luxon = netrino.main:entry_point'
+    #        'netrino = netrino.main:entry_point'
     #    ],
     # }
 )
