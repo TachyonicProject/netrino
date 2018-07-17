@@ -28,13 +28,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
 
-from netrino import register
-
-
-@register.interface('netconf')
 class Interface(object):
     def edit_config(self, uuid, payload):
         # step 1 use function to get creds etc from uuid
         # step 2 pass to ncclient
         # return response
+        pass
 
