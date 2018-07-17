@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Frans Rademan.
+# Copyright (c) 2018 Christiaan Frans Rademan, David Kruger.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,4 +28,15 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
 
-from netrino.core.register import Register
+class Element(object):
+    def discover(self, driver, prefix):
+        pass
+
+    def create(self, name):
+        pass
+
+    def update(self, uuid):
+        pass
+
+    def remove(self, uuid):
+        pass

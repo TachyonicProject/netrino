@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Frans Rademan.
+# Copyright (c) 2018 Christiaan Frans Rademan, David Kruger.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,5 +27,21 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
+from uuid import uuid4
 
-from netrino.core.register import Register
+from luxon import Model
+from luxon.utils.timezone import now 
+
+from netrino import register
+
+
+@register.element('netconf')
+class Element(Model):
+    id = Model.Uuid(default=uuid4, internal=True)
+    ip = Model.String(null=False)
+    username = Model.String(null=False)
+    password = Model.String(null=True)
+    port = Model.Integer(null=True)
+    timeout = Model.Integer(null=True)
+    private_key = Model.Uuid(null=True)
+    primary_key = id
