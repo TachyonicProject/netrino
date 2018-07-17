@@ -58,7 +58,7 @@ class luxon_element_interface(SQLModel):
     id = SQLModel.Uuid(default=uuid4, internal=True)
     element_id = SQLModel.Uuid(null=False)
     interface = SQLModel.Text(null=False)
-    credentials = SQLModel.Text()
+    metadata = SQLModel.Text()
     creation_time = SQLModel.DateTime(default=now, readonly=True)
     element_ref = SQLModel.ForeignKey(element_id, luxon_element.id)
     unique_element_interface = SQLModel.UniqueIndex(element_id, interface)
