@@ -28,11 +28,29 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
 from netrino.interfaces.interface import Interface as BaseInterface
+from luxon.exceptions import FieldMissing
 
+# (@Vuader) Note: until ncclient has merged Tachyonic's pull request,
+# remember to clone ncclient from TachyonicProject.
+from ncclient import manager
 
 class Interface(BaseInterface):
-    def edit_config(self, payload):
-        # step 2 pass to ncclient
-        # return response
-        pass
+    def __init__(self, uuid):
+        super().__init__(uuid, "netconf")
+
+    def __getattr__(self, name):
+        # Instead of checking all the fields here one by one,
+        # we should load model, and verify self.metadata against it.
+        # Raise Fieldmissing if so, else continue here
+        if not 'ip' in self.metadata:
+            raise FieldMissing(
+                'No IP to use for Netconf to element "%s"' % self.uuid)
+
+        with manager.connect(host=self.metadata['ip'],
+                             port=self.metadata['port'],
+                             username=self.metadata['username'],
+                             password=self.metadata['password'],
+                             timeout=self.metadata['timeout']) as m:
+                             # Todo: pass self.metadata['private_key']
+            return getattr(m, name)
 

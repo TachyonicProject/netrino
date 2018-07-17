@@ -27,8 +27,9 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
+from netrino.utils.interface import get_element_metadata
 
 class Interface(object):
-    def __init__(self, uuid):
-        # step 1 use function to get creds etc from uuid
-        self.metadata = 
+    def __init__(self, uuid, interface):
+        self.uuid = uuid
+        self.metadata = get_element_metadata(uuid, interface)
