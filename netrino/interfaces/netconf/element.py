@@ -32,10 +32,7 @@ from uuid import uuid4
 from luxon import Model
 from luxon.utils.timezone import now 
 
-from netrino import register
 
-
-@register.element('netconf')
 class Element(Model):
     id = Model.Uuid(default=uuid4, internal=True)
     ip = Model.String(null=False)
