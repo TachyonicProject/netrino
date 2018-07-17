@@ -27,12 +27,8 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-from netrino.interfaces.interface import Interface as BaseInterface
 
-
-class Interface(BaseInterface):
-    def edit_config(self, payload):
-        # step 2 pass to ncclient
-        # return response
-        pass
-
+class Interface(object):
+    def __init__(self, uuid):
+        # step 1 use function to get creds etc from uuid
+        self.metadata = 
