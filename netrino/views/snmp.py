@@ -27,21 +27,21 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-from luxon import g
-from luxon import register_resources
+from luxon import router
+from luxon import register
 
 from netrino.workers.snmp import discover_element
 
 from pyipcalc import IPNetwork
 
 
-@register_resources()
+@register.resources()
 class DiscoverElements():
     def __init__(self):
-        g.router.add('POST', '/v1/snmp/{ip}',
+        router.add('POST', '/v1/snmp/{ip}',
                      self.discover, tag='operations')
 
-        g.router.add('POST', '/v1/snmp/{ip}/{subnet}',
+        router.add('POST', '/v1/snmp/{ip}/{subnet}',
                      self.discover, tag='operations')
         
     

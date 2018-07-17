@@ -29,24 +29,25 @@
 # THE POSSIBILITY OF SUCH DAMAGE.
 import json
 
-from luxon import register_resource
+from luxon import register
 from luxon import db
-from infinitystone.utils.api import model
+from psychokinetic.utils.api import sql_list, obj
+
 from netrino.models.elements import luxon_element
-from netrino.models.elements import luxon_element_driver
+from netrino.models.elements import luxon_element_interface
 
 
-@register_resource('GET', '/v1/elements', 'operations')
+@register.resource('GET', '/v1/elements', 'operations')
 def list_elements(req, resp):
     """List all Elements
 
     Returns:
          List of available Elements
     """
-    elements = model(luxon_element)
+    elements = obj(luxon_element)
     return elements
 
-@register_resource('POST', '/v1/element', 'operations')
+@register.resource('POST', '/v1/element', 'operations')
 def add_element(req, resp):
     """Add Element
 
@@ -61,11 +62,11 @@ def add_element(req, resp):
     Returns:
         Completed model of element in case createion was successful.
     """
-    element = model(luxon_element, values=req.json)
+    element = obj(luxon_element, values=req.json)
     element.commit()
     return element
 
-@register_resource(['PUT', 'PATCH'], '/v1/element/{id}', 'operations')
+@register.resource(['PUT', 'PATCH'], '/v1/element/{id}', 'operations')
 def update_element(req, resp, id):
     """Add Element
 
@@ -80,21 +81,21 @@ def update_element(req, resp, id):
     Returns:
         Completed model of element in case creation was successful.
     """
-    element = model(luxon_element, id=id, values=req.json)
+    element = obj(luxon_element, id=id, values=req.json)
     element.commit()
     return element
 
-@register_resource('DELETE', '/v1/element/{id}', 'operations')
+@register.resource('DELETE', '/v1/element/{id}', 'operations')
 def update_element(req, resp, id):
     """Remove an Element.
 
     Returns:
          200 OK if successful.
     """
-    element = model(luxon_element, id=id)
+    element = obj(luxon_element, id=id)
     element.delete()
 
-@register_resource('POST', '/v1/element/{id}/driver', 'operations')
+@register.resource('POST', '/v1/element/{id}/driver', 'operations')
 def add_element_driver(req, resp, id):
     """Add Element Driver
 
@@ -108,11 +109,11 @@ def add_element_driver(req, resp, id):
     req.json['element_id'] = id
     from luxon import GetLogger
     log = GetLogger(__name__)
-    driver = model(luxon_element_driver, values=req.json)
+    driver = obj(luxon_element_interface, values=req.json)
     driver.commit()
     return driver
 
-@register_resource('DELETE', '/v1/element/{id}/driver/{driver}', 'operations')
+@register.resource('DELETE', '/v1/element/{id}/driver/{driver}', 'operations')
 def delete_element_driver(req, resp, id, driver):
     """Delete Element Driver
 
@@ -124,10 +125,10 @@ def delete_element_driver(req, resp, id, driver):
         200 OK if successful.
     """
     values = {'element_id': id, "driver": driver}
-    driver = model(luxon_element_driver, values=values)
+    driver = obj(luxon_element_interface, values=values)
     driver.delete()
 
-@register_resource('GET', '/v1/element/{id}/drivers', 'operations')
+@register.resource('GET', '/v1/element/{id}/drivers', 'operations')
 def view_element_driver(req, resp, id):
     """View Element Driver
 
