@@ -27,5 +27,22 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
+import traceback
 
-from netrino.core.register import Register
+from luxon import g
+from luxon.core.logger import GetLogger
+
+log = GetLogger(__name__)
+
+
+class Register(object):
+    __slots__ = ()
+
+    def discover(self, name):
+        pass
+
+    def element(self, name):
+        pass
+
+    def interface(self, name):
+        pass

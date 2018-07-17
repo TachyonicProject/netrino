@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Frans Rademan.
+# Copyright (c) 2018 Christiaan Frans Rademan, David Kruger.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,4 +28,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
 
-from netrino.core.register import Register
+from netrino import register
+
+
+@register.interface('netconf')
+class Interface(object):
+    def edit_config(self, uuid, payload):
+        # step 1 use function to get creds etc from uuid
+        # step 2 pass to ncclient
+        # return response
+
