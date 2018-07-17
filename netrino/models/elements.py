@@ -29,44 +29,47 @@
 # THE POSSIBILITY OF SUCH DAMAGE.
 from uuid import uuid4
 
-from luxon import database_model
+from luxon import register
 from luxon import SQLModel
-from luxon import Uuid
-from luxon import Text
-from luxon import DateTime
-from luxon import Boolean
-from luxon import Index
-from luxon import UniqueIndex
-from luxon import Fqdn
-from luxon import ForeignKey
+from luxon.utils.timezone import now
 from infinitystone.models.domains import luxon_domain
 
 
 from luxon.utils.timezone import now
 
-@database_model()
+@register.model()
 class luxon_element(SQLModel):
-    id = Uuid(default=uuid4, internal=True)
-    parent_id = Uuid()
-    name = Text(null=False)
-    ipv4 = Text()
-    ipv6 = Text()
-    enabled = Boolean(default=True)
-    domain = Fqdn(internal=True)
-    creation_time = DateTime(default=now, readonly=True)
+    id = SQLModel.Uuid(default=uuid4, internal=True)
+    parent_id = SQLModel.Uuid()
+    name = SQLModel.Text(null=False)
+    ipv4 = SQLModel.Text()
+    ipv6 = SQLModel.Text()
+    enabled = SQLModel.Boolean(default=True)
+    domain = SQLModel.Fqdn(internal=True)
+    creation_time = SQLModel.DateTime(default=now, readonly=True)
     primary_key = id
-    element_domain_ref = ForeignKey(domain, luxon_domain.name)
-    unique_element_ipv4 = UniqueIndex(ipv4)
-    unique_element_ipv6 = UniqueIndex(ipv6)
-    elements = Index(id)
+    element_domain_ref = SQLModel.ForeignKey(domain, luxon_domain.name)
+    unique_element_ipv4 = SQLModel.UniqueIndex(ipv4)
+    unique_element_ipv6 = SQLModel.UniqueIndex(ipv6)
+    elements = SQLModel.Index(id)
 
-@database_model()
-class luxon_element_driver(SQLModel):
-    id = Uuid(default=uuid4, internal=True)
-    element_id = Uuid(null=False)
-    driver = Text(null=False)
-    creation_time = DateTime(default=now, readonly=True)
-    element_ref = ForeignKey(element_id, luxon_element.id)
-    unique_element_driver = UniqueIndex(element_id, driver)
-    element_driver = Index(element_id, driver)
+@register.model()
+class luxon_element_interface(SQLModel):
+    id = SQLModel.Uuid(default=uuid4, internal=True)
+    element_id = SQLModel.Uuid(null=False)
+    interface = SQLModel.Text(null=False)
+    credentials = SQLModel.Text()
+    creation_time = SQLModel.DateTime(default=now, readonly=True)
+    element_ref = SQLModel.ForeignKey(element_id, luxon_element.id)
+    unique_element_interface = SQLModel.UniqueIndex(element_id, interface)
+    element_driver = SQLModel.Index(element_id, interface)
+    primary_key = id
+
+@register.model()
+class luxon_element_tag(SQLModel):
+    id = SQLModel.Uuid(default=uuid4, internal=True)
+    name = SQLModel.Text(null=False)
+    element_id = SQLModel.Uuid(null=False)
+    element_ref = SQLModel.ForeignKey(element_id, luxon_element.id)
+    unique_element_tag = SQLModel.UniqueIndex(element_id, name)
     primary_key = id
