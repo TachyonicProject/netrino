@@ -38,7 +38,7 @@ from infinitystone.models.domains import luxon_domain
 from luxon.utils.timezone import now
 
 @register.model()
-class luxon_element(SQLModel):
+class netrino_element(SQLModel):
     id = SQLModel.Uuid(default=uuid4, internal=True)
     parent_id = SQLModel.Uuid()
     name = SQLModel.Text(null=False)
@@ -54,22 +54,22 @@ class luxon_element(SQLModel):
     elements = SQLModel.Index(id)
 
 @register.model()
-class luxon_element_interface(SQLModel):
+class netrino_element_interface(SQLModel):
     id = SQLModel.Uuid(default=uuid4, internal=True)
     element_id = SQLModel.Uuid(null=False)
     interface = SQLModel.Text(null=False)
     metadata = SQLModel.Text()
     creation_time = SQLModel.DateTime(default=now, readonly=True)
-    element_ref = SQLModel.ForeignKey(element_id, luxon_element.id)
+    element_ref = SQLModel.ForeignKey(element_id, netrino_element.id)
     unique_element_interface = SQLModel.UniqueIndex(element_id, interface)
     element_driver = SQLModel.Index(element_id, interface)
     primary_key = id
 
 @register.model()
-class luxon_element_tag(SQLModel):
+class netrino_element_tag(SQLModel):
     id = SQLModel.Uuid(default=uuid4, internal=True)
     name = SQLModel.Text(null=False)
     element_id = SQLModel.Uuid(null=False)
-    element_ref = SQLModel.ForeignKey(element_id, luxon_element.id)
+    element_ref = SQLModel.ForeignKey(element_id, netrino_element.id)
     unique_element_tag = SQLModel.UniqueIndex(element_id, name)
     primary_key = id

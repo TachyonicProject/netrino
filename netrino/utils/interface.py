@@ -13,7 +13,7 @@ def get_element_metadata(uuid, interface):
         dict build from json fetched from the database, if any, else None.
     """
     with db() as cur:
-        sql = 'SELECT metadata FROM luxon_element_interface WHERE ' \
+        sql = 'SELECT metadata FROM netrino_element_interface WHERE ' \
               'id=? AND interface=?'
         result = cur.execute(sql, (uuid, interface))
         result = result.fetchone()
