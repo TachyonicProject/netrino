@@ -32,7 +32,6 @@ from uuid import uuid4
 from luxon import register
 from luxon import SQLModel
 from luxon.utils.timezone import now
-from infinitystone.models.domains import luxon_domain
 
 
 from luxon.utils.timezone import now
@@ -45,10 +44,8 @@ class netrino_element(SQLModel):
     ipv4 = SQLModel.Text()
     ipv6 = SQLModel.Text()
     enabled = SQLModel.Boolean(default=True)
-    domain = SQLModel.Fqdn(internal=True)
     creation_time = SQLModel.DateTime(default=now, readonly=True)
     primary_key = id
-    element_domain_ref = SQLModel.ForeignKey(domain, luxon_domain.name)
     unique_element_ipv4 = SQLModel.UniqueIndex(ipv4)
     unique_element_ipv6 = SQLModel.UniqueIndex(ipv6)
     elements = SQLModel.Index(id)
