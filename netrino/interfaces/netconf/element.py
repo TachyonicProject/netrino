@@ -35,10 +35,10 @@ from luxon.utils.timezone import now
 
 class Element(Model):
     id = Model.Uuid(default=uuid4, internal=True)
-    ip = Model.String(null=False)
+    host = Model.String(null=False)
     username = Model.String(null=False)
     password = Model.String(null=True)
     port = Model.Integer(null=True)
     timeout = Model.Integer(null=True)
-    private_key = Model.Uuid(null=True)
+    private_key = Model.Text(null=True)
     primary_key = id
