@@ -29,44 +29,16 @@
 # THE POSSIBILITY OF SUCH DAMAGE.
 from uuid import uuid4
 
-from luxon import register
-from luxon import SQLModel
-from luxon.utils.timezone import now
+from luxon import Model
+from luxon.utils.timezone import now 
 
 
-from luxon.utils.timezone import now
-
-@register.model()
-class netrino_element(SQLModel):
-    id = SQLModel.Uuid(default=uuid4, internal=True)
-    parent_id = SQLModel.Uuid()
-    name = SQLModel.Text(null=False)
-    ipv4 = SQLModel.Text()
-    ipv6 = SQLModel.Text()
-    enabled = SQLModel.Boolean(default=True)
-    creation_time = SQLModel.DateTime(default=now, readonly=True)
-    primary_key = id
-    unique_element_ipv4 = SQLModel.UniqueIndex(ipv4)
-    unique_element_ipv6 = SQLModel.UniqueIndex(ipv6)
-    elements = SQLModel.Index(id)
-
-@register.model()
-class netrino_element_interface(SQLModel):
-    id = SQLModel.Uuid(default=uuid4, internal=True)
-    element_id = SQLModel.Uuid(null=False)
-    interface = SQLModel.Text(null=False)
-    metadata = SQLModel.Text()
-    creation_time = SQLModel.DateTime(default=now, readonly=True)
-    element_ref = SQLModel.ForeignKey(element_id, netrino_element.id)
-    unique_element_interface = SQLModel.UniqueIndex(element_id, interface)
-    element_driver = SQLModel.Index(element_id, interface)
-    primary_key = id
-
-@register.model()
-class netrino_element_tag(SQLModel):
-    id = SQLModel.Uuid(default=uuid4, internal=True)
-    name = SQLModel.Text(null=False)
-    element_id = SQLModel.Uuid(null=False)
-    element_ref = SQLModel.ForeignKey(element_id, netrino_element.id)
-    unique_element_tag = SQLModel.UniqueIndex(element_id, name)
+class Element(Model):
+    id = Model.Uuid(default=uuid4, internal=True)
+    host = Model.String(null=False)
+    username = Model.String(null=False)
+    password = Model.String(null=True)
+    port = Model.Integer(null=True)
+    timeout = Model.Integer(null=True)
+    private_key = Model.Text(null=True)
     primary_key = id
