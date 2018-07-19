@@ -27,6 +27,8 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
+import atexit
+
 from netrino.interfaces.interface import Interface as BaseInterface
 from luxon.exceptions import FieldMissing
 
@@ -34,23 +36,70 @@ from luxon.exceptions import FieldMissing
 # remember to clone ncclient from TachyonicProject.
 from ncclient import manager
 
+from luxon import GetLogger
+
+log = GetLogger(__name__)
+
 class Interface(BaseInterface):
+    """Netconf Interface/driver.
+
+    Acts as ncclient.manager connection obj. Call it or use with with:
+
+    Eg.
+
+    .. code:: python
+
+        manager = Interface('element-uuid')
+        m = manager()
+        m.lock()
+
+
+    or
+
+    .. code:: python
+
+        manager = Interface('element-uuid')
+        with manager() as m:
+            m.lock()
+
+    Args:
+        uuid(str): UUID of element
+
+    Element credentials obtained from metadata in database.
+
+    """
     def __init__(self, uuid):
         super().__init__(uuid, "netconf")
+        self.conn = None
+
+    def __call__(self):
+        self.conn = manager.connect(**self.metadata)
+        # (@Vuader) If this object is called multiple times,
+        # the exit function is registered multiple times atexit
+        # So if it is called twice eg, the close() method is run twice.
+        # Does not seem ideal.
+        atexit.register(self.close)
+        return self
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        self.conn.close_session()
 
     def __getattr__(self, name):
-        # Instead of checking all the fields here one by one,
-        # we should load model, and verify self.metadata against it.
-        # Raise Fieldmissing if so, else continue here
-        if not 'ip' in self.metadata:
-            raise FieldMissing(
-                'No IP to use for Netconf to element "%s"' % self.uuid)
+        return getattr(self.conn, name)
 
-        with manager.connect(host=self.metadata['ip'],
-                             port=self.metadata['port'],
-                             username=self.metadata['username'],
-                             password=self.metadata['password'],
-                             timeout=self.metadata['timeout']) as m:
-                             # Todo: pass self.metadata['private_key']
-            return getattr(m, name)
+    def close(self):
+        """Close ncclient manager connection if it is still open.
+
+         Used with atexit.
+        """
+        try:
+            self.conn.close_session()
+        except:
+            pass
+
+    #def edit_config(self, *args, **kwargs):
+
 
