@@ -33,8 +33,8 @@ from luxon import register
 from luxon import db
 from psychokinetic.utils.api import sql_list, obj
 
-from netrino.models.elements import luxon_element
-from netrino.models.elements import luxon_element_interface
+from netrino.models.elements import netrino_element
+from netrino.models.elements import netrino_element_interface
 
 
 @register.resource('GET', '/v1/elements', 'operations')
@@ -44,7 +44,7 @@ def list_elements(req, resp):
     Returns:
          List of available Elements
     """
-    elements = obj(luxon_element)
+    elements = obj(netrino_element)
     return elements
 
 @register.resource('POST', '/v1/element', 'operations')
@@ -62,7 +62,7 @@ def add_element(req, resp):
     Returns:
         Completed model of element in case createion was successful.
     """
-    element = obj(luxon_element, values=req.json)
+    element = obj(netrino_element, values=req.json)
     element.commit()
     return element
 
@@ -81,7 +81,7 @@ def update_element(req, resp, id):
     Returns:
         Completed model of element in case creation was successful.
     """
-    element = obj(luxon_element, id=id, values=req.json)
+    element = obj(netrino_element, id=id, values=req.json)
     element.commit()
     return element
 
@@ -92,7 +92,7 @@ def update_element(req, resp, id):
     Returns:
          200 OK if successful.
     """
-    element = obj(luxon_element, id=id)
+    element = obj(netrino_element, id=id)
     element.delete()
 
 @register.resource('POST', '/v1/element/{id}/driver', 'operations')
@@ -109,7 +109,7 @@ def add_element_driver(req, resp, id):
     req.json['element_id'] = id
     from luxon import GetLogger
     log = GetLogger(__name__)
-    driver = obj(luxon_element_interface, values=req.json)
+    driver = obj(netrino_element_interface, values=req.json)
     driver.commit()
     return driver
 
@@ -125,7 +125,7 @@ def delete_element_driver(req, resp, id, driver):
         200 OK if successful.
     """
     values = {'element_id': id, "driver": driver}
-    driver = obj(luxon_element_interface, values=values)
+    driver = obj(netrino_element_interface, values=values)
     driver.delete()
 
 @register.resource('GET', '/v1/element/{id}/drivers', 'operations')
@@ -136,9 +136,9 @@ def view_element_driver(req, resp, id):
          id (str): UUID of the Element.
 
     Returns:
-        instance of luxon_element_driver model.
+        instance of netrino_element_driver model.
     """
-    sql = "SELECT * FROM luxon_element_driver WHERE element_ID=?"
+    sql = "SELECT * FROM netrino_element_driver WHERE element_ID=?"
     with db() as cur:
         results = cur.execute(sql, id).fetchall()
     return json.dumps(results)
