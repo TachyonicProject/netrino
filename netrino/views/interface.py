@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Frans Rademan, David Kruger.
+# Copyright (c) 2018 David Kruger.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,15 +27,31 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-from netrino.utils.interface import get_element_metadata
-from luxon import GetLogger
+from luxon import router
+from luxon import register
 
-log = GetLogger(__name__)
+from luxon.utils.pkg import EntryPoints
 
-class Interface(object):
-    def __init__(self, uuid, interface):
-        self.uuid = uuid
-        self.metadata = get_element_metadata(uuid, interface)
-        if not self.metadata:
-            log.info("Element '%s' not found" % uuid)
-            self.metadata = {}
+
+@register.resources()
+class Interface():
+    def __init__(self):
+        router.add('POST', '/v1/interface/{interface}/{method}/{id}',
+                     self.interface, tag='services')
+
+
+    def interface(self, req, resp, interface, method, id):
+        """ Interact with element via given interface and method.
+        
+        Args:
+            interface (str): Netrino Interface to use.
+            method (str): Method to run on Interface object.
+            id(str): UUID of element.
+
+        """
+        netrino_interface = EntryPoints('netrino_interfaces')
+        interface = netrino_interface[interface](id)
+
+        with interface() as conn:
+            method = getattr(conn, method)
+            return method(req)
