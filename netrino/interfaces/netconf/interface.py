@@ -73,17 +73,10 @@ class Interface(BaseInterface):
         self.default_operation = default_operation
         self.target = target
 
-    def __call__(self):
         self.conn = manager.connect(**self.metadata)
         if not self.conn:
             raise NotFoundError(
                 "Unable to connect to element '%s'" % self.uuid)
-        # (@Vuader) If this object is called multiple times,
-        # the exit function is registered multiple times atexit
-        # So if it is called twice eg, the close() method is run twice.
-        # Does not seem ideal.
-        atexit.register(self.close)
-        return self
 
     def __enter__(self):
         return self
@@ -94,17 +87,7 @@ class Interface(BaseInterface):
     def __getattr__(self, name):
         return getattr(self.conn, name)
 
-    def close(self):
-        """Close ncclient manager connection if it is still open.
-
-         Used with atexit.
-        """
-        try:
-            self.conn.close_session()
-        except:
-            pass
-
-    def update(self, req):
+    def config(self, req):
         """Update element configuration via ncclient's .edit-config()
 
         Args:
@@ -122,4 +105,4 @@ class Interface(BaseInterface):
                                       target=self.target)
         self.conn.commit()
         self.conn.unlock()
-        return str(result)
+        return {'result': str(result)}
