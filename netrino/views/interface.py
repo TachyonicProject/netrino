@@ -42,7 +42,7 @@ class Interface():
 
     def interface(self, req, resp, interface, method, id):
         """ Interact with element via given interface and method.
-        
+
         Args:
             interface (str): Netrino Interface to use.
             method (str): Method to run on Interface object.
@@ -50,8 +50,7 @@ class Interface():
 
         """
         netrino_interface = EntryPoints('netrino_interfaces')
-        interface = netrino_interface[interface](id)
 
-        with interface() as conn:
+        with netrino_interface[interface](id) as conn:
             method = getattr(conn, method)
             return method(req)

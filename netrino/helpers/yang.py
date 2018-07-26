@@ -61,15 +61,21 @@ class RFC7951dict():
     def to_etree(self, json_dict, element=etree.Element("config")):
         """Adds xml namespace from RFC7951 defined dict to lxml.etree
 
+        Any keys starting with "-" will be added as an attribute to the parent
+        element (without the "-").
+
         Args:
-        json_dict(dict): python dict converted from RFC7951 formatted json.
-        element(ob): lxml.etree element.
+            json_dict(dict): python dict converted from RFC7951 formatted json.
+            element(ob): lxml.etree element.
 
         Returns:
             lxml.etree obj with namespace.
         """
         for k in json_dict:
-            if ':' in k:
+            if k[0] == '-':
+                element.attrib[k[1:]] = json_dict[k]
+                continue
+            elif ':' in k:
                 module, key = k.split(':')
                 namespace = module2namespace('yang/%s.yang' % module,
                                              self._client)
