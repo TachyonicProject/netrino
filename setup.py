@@ -286,10 +286,12 @@ setup_dict = dict(
             'netconf = netrino.interfaces.netconf.discover:discover'
         ],
         'netrino_interfaces': [
-            'netconf = netrino.interfaces.netconf.interface:Interface'
+            'netconf = netrino.interfaces.netconf.interface:Interface',
+            'openstack = netrino.interfaces.openstack.interface:Interface'
         ],
         'netrino_elements': [
-            'netconf = netrino.interfaces.netconf.element:Element'
+            'netconf = netrino.interfaces.netconf.element:Element',
+            'openstack = netrino.interfaces.openstack.element:Element'
         ],
     }
     #    'console_scripts': [

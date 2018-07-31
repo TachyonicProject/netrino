@@ -1,3 +1,2 @@
-from netrino.interfaces.netconf import element
-from netrino.interfaces.netconf import discover
-from netrino.interfaces.netconf import interface
+from netrino.interfaces.openstack import element
+from netrino.interfaces.openstack import interface
