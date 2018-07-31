@@ -32,25 +32,51 @@ from luxon import register
 
 from luxon.utils.pkg import EntryPoints
 
+METHODS = ('GET','POST','PUT','DELETE','PATCH',
+           'OPTIONS','HEAD','TRACE','CONNECT')
 
 @register.resources()
 class Interface():
     def __init__(self):
-        router.add('POST', '/v1/interface/{interface}/{method}/{id}',
-                     self.interface, tag='services')
+        router.add(METHODS,
+                   '/v1/interface/{id}/{interface}/{property}',
+                   self.interface, tag='services')
+        router.add(METHODS,
+                   '/v1/interface/{id}/{interface}/{property}/{method}',
+                   self.property, tag='services')
 
-
-    def interface(self, req, resp, interface, method, id):
+    def interface(self, req, resp, id, interface, property):
         """ Interact with element via given interface and method.
 
         Args:
             interface (str): Netrino Interface to use.
-            method (str): Method to run on Interface object.
+            property (str): Method to run on Interface object.
             id(str): UUID of element.
 
+        Returns:
+            Executes the method, and returns the result.
         """
         netrino_interface = EntryPoints('netrino_interfaces')
 
-        with netrino_interface[interface](id) as conn:
-            method = getattr(conn, method)
+        with netrino_interface[interface](id) as obj:
+            method = getattr(obj, property)
+            return method(req)
+
+    def property(self, req, resp, id, interface, property, method):
+        """ Interact with element via given interface, with property method.
+
+        Args:
+            interface (str): Netrino Interface to use.
+            property (str): Property on Netrino Interface that returns obj with
+                            method
+            method (str): Method to run on Interface property object.
+            id(str): UUID of element.
+
+        Returns:
+            Executes the method, and returns the result.
+        """
+        netrino_interface = EntryPoints('netrino_interfaces')
+        with netrino_interface[interface](id) as obj:
+            prop_obj = getattr(obj, property)
+            method = getattr(prop_obj, method)
             return method(req)
