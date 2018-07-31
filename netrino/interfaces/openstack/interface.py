@@ -27,71 +27,67 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
+from copy import deepcopy
+
 from netrino.interfaces.interface import Interface as BaseInterface
 
-# (@Vuader) Note: until ncclient has merged Tachyonic's pull request,
-# remember to clone & install ncclient from TachyonicProject.
-from ncclient import manager
-from netrino.helpers.yang import RFC7951dict
-from luxon.exceptions import NotFoundError
+from psychokinetic.openstack.openstack import Openstack
+
+from luxon.exceptions import FieldMissing
 
 
 class Interface(BaseInterface):
-    """Netconf Interface/driver.
+    """Openstack Interface/driver.
 
-    Acts as ncclient.manager connection obj. Use with with:
-
-    Eg.
+    Wrapper around psychokinetic.Openstack obj
 
     .. code:: python
 
-        with Interface('element-uuid') as m:
-            m.lock()
+        with Interface('element-uuid') as os:
+            projects = os.identity.execute(req)
 
     Element credentials obtained from metadata in database.
+    req body must contain "uri", "data", "method" and either "project_name"
+    or "project_id". domain is obtained from req.context_domain.
+    execute methods are overwritten to return json.
 
     Args:
         uuid (str): UUID of element
-        default_operation (str): default Netconf operation. (defaults to merge)
-        target (str): Netconf target. (defaults to candidate)
     """
 
-    def __init__(self, uuid, default_operation="merge", target="candidate"):
-        super().__init__(uuid, "netconf")
-        self.conn = None
-        self.default_operation = default_operation
-        self.target = target
+    def __init__(self, uuid):
+        super().__init__(uuid, "openstack")
 
-        self.conn = manager.connect(**self.metadata)
-        if not self.conn:
-            raise NotFoundError(
-                "Unable to connect to element '%s'" % self.uuid)
+        if not 'keystone_url' in self.metadata:
+            raise FieldMissing(field="keystone_url",
+                               label="Keystone URL",
+                               description="No Keystone URL for element '%s'" %
+                                           self.uuid)
+
+
+        self.os = Openstack(self.metadata['keystone_url'],
+                            self.metadata['region'],
+                            self.metadata['interface'])
 
     def __enter__(self):
+        self.os.identity.authenticate(self.metadata['username'],
+                                      self.metadata['password'],
+                                      self.metadata['domain'])
         return self
 
     def __exit__(self, *args, **kwargs):
-        self.conn.close_session()
+        self.os.identity.revoke(self.os._login_token)
 
     def __getattr__(self, name):
-        return getattr(self.conn, name)
-
-    def config(self, req):
-        """Update element configuration via ncclient's .edit-config()
-
-        Args:
-            req (obj): Luxon WSGI request object containing context.api and
-                       json body
-
-        Returns:
-             str version of ncclient edit_config result.
-        """
-        rfc7951dict = RFC7951dict(req.context.api)
-        config = rfc7951dict.to_etree(req.json)
-        self.conn.lock()
-        result = self.conn.edit_config(config=config,
-                                      default_operation=self.default_operation,
-                                      target=self.target)
-        self.conn.commit()
-        self.conn.unlock()
-        return {'result': str(result)}
+        original_attr = getattr(self.os, name)
+        # Since we are wrapping around psychokinetic's openstack
+        # client, we have to modify the execute method of the
+        # openstack endpoint method to return json
+        # instead of the default reponse object.
+        attr = deepcopy(original_attr)
+        if hasattr(original_attr, "execute"):
+            def execute(*args, **kwargs):
+                result = original_attr.execute(*args, **kwargs)
+                return result.json
+            attr.execute = execute
+        return attr
