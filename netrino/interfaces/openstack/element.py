@@ -30,6 +30,7 @@
 from uuid import uuid4
 
 from luxon import Model
+from luxon.utils.timezone import now 
 
 
 class Element(Model):

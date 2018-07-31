@@ -27,6 +27,8 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
+import atexit
+
 from netrino.interfaces.interface import Interface as BaseInterface
 
 # (@Vuader) Note: until ncclient has merged Tachyonic's pull request,
@@ -39,13 +41,22 @@ from luxon.exceptions import NotFoundError
 class Interface(BaseInterface):
     """Netconf Interface/driver.
 
-    Acts as ncclient.manager connection obj. Use with with:
+    Acts as ncclient.manager connection obj. Call it or use with with:
 
     Eg.
 
     .. code:: python
 
-        with Interface('element-uuid') as m:
+        manager = Interface('element-uuid')
+        m = manager()
+        m.lock()
+
+    or
+
+    .. code:: python
+
+        manager = Interface('element-uuid')
+        with manager() as m:
             m.lock()
 
     Element credentials obtained from metadata in database.
