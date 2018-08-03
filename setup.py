@@ -287,11 +287,13 @@ setup_dict = dict(
         ],
         'netrino_interfaces': [
             'netconf = netrino.interfaces.netconf.interface:Interface',
-            'openstack = netrino.interfaces.openstack.interface:Interface'
+            'openstack = netrino.interfaces.openstack.interface:Interface',
+            'contrail = netrino.interfaces.contrail.interface:Interface'
         ],
         'netrino_elements': [
             'netconf = netrino.interfaces.netconf.element:Element',
-            'openstack = netrino.interfaces.openstack.element:Element'
+            'openstack = netrino.interfaces.openstack.element:Element',
+            'contrail = netrino.interfaces.contrail.element:Element'
         ],
     }
     #    'console_scripts': [
