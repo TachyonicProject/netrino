@@ -31,6 +31,8 @@ from luxon import router
 from luxon import register
 
 from luxon.utils.pkg import EntryPoints
+from luxon.exceptions import NotFoundError
+
 
 METHODS = ('GET','POST','PUT','DELETE','PATCH',
            'OPTIONS','HEAD','TRACE','CONNECT')
@@ -58,9 +60,12 @@ class Interface():
         """
         netrino_interface = EntryPoints('netrino_interfaces')
 
-        with netrino_interface[interface](id) as obj:
-            method = getattr(obj, property)
-            return method(req)
+        try:
+            with netrino_interface[interface](id) as obj:
+                method = getattr(obj, property)
+                return method(req)
+        except KeyError:
+            raise NotFoundError("Interface '%s' not registered" % interface)
 
     def property(self, req, resp, id, interface, property, method):
         """ Interact with element via given interface, with property method.
