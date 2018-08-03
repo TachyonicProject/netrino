@@ -30,6 +30,7 @@
 from copy import deepcopy
 
 from netrino.interfaces.interface import Interface as BaseInterface
+from netrino.utils.interface import getScope
 
 from psychokinetic.openstack.openstack import Openstack
 
@@ -60,7 +61,7 @@ class Interface(BaseInterface):
 
         if not 'keystone_url' in self.metadata:
             raise FieldMissing(field="keystone_url",
-                               label="Keystone URL",
+                               label="Openstack Interface",
                                description="No Keystone URL for element '%s'" %
                                            self.uuid)
 
@@ -82,12 +83,20 @@ class Interface(BaseInterface):
         original_attr = getattr(self.os, name)
         # Since we are wrapping around psychokinetic's openstack
         # client, we have to modify the execute method of the
-        # openstack endpoint method to return json
-        # instead of the default reponse object.
+        # openstack endpoint method to:
+        # * take req as first arg, and
+        # * return json instead of the default reponse object.
         attr = deepcopy(original_attr)
         if hasattr(original_attr, "execute"):
-            def execute(*args, **kwargs):
-                result = original_attr.execute(*args, **kwargs)
+            def execute(req, *args, **kwargs):
+                method = req.json['method']
+                uri = req.json['uri']
+                if 'data' in req.json:
+                    kwargs['data'] = req.json['data']
+                self.os.identity.scope(
+                    **getScope(req, infinitystone=['domain'],
+                               one_of=['project_id', 'project_name']))
+                result = original_attr.execute(method, uri, *args, **kwargs)
                 return result.json
             attr.execute = execute
         return attr
