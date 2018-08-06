@@ -302,12 +302,11 @@ setup_dict = dict(
             'element = netrino.resources.element.element:Element',
             'ipv4 = netrino.resources.ipv4.ipv4:IPv4',
             'ipv6 = netrino.resources.ipv6.ipv6:IPv6',
-        ]
+        ],
+        'console_scripts': [
+            'netrino = netrino.main:entry_point'
+        ],
     }
-    #    'console_scripts': [
-    #        'netrino = netrino.main:entry_point'
-    #    ],
-    # }
 )
 
 
