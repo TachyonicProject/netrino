@@ -297,6 +297,11 @@ setup_dict = dict(
         ],
         'netrino_mappers': [
             'infinitystone_domain = netrino.mappers:domain_from_context'
+        ],
+        'netrino_resources': [
+            'element = netrino.resources.element.element:Element',
+            'ipv4 = netrino.resources.ipv4.ipv4:IPv4',
+            'ipv6 = netrino.resources.ipv6.ipv6:IPv6',
         ]
     }
     #    'console_scripts': [
