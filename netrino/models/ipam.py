@@ -27,46 +27,23 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-from luxon import router
+from uuid import uuid4
+
 from luxon import register
+from luxon import SQLModel
+from luxon.utils.timezone import now
 
-from netrino.workers.snmp import discover_element
-
-from pyipcalc import IPNetwork
-
-
-@register.resources()
-class DiscoverElements():
-    def __init__(self):
-        router.add('POST', '/v1/snmp/{ip}',
-                     self.discover, tag='operations')
-
-        router.add('POST', '/v1/snmp/{ip}/{subnet}',
-                     self.discover, tag='operations')
-        
-    
-    def discover(self, req, resp, ip, subnet=None):
-        """ Discover devices with SNMP v2.
-        
-        POST to 'v1/snmp/x.x.x.x' or
-                'v1/snmp/x.x.x.x/yy'
-        where x.x.x.x is an IP address, and yy the subnet mask.
-
-        Body should contain value for 'community', otherwise the default
-        of 'public' is used.
-
-        Args:
-            ip (str): IP address to be scanned.
-            subnet (str): Subnet mask.
-            community: SNMP v2 community string
-
-        """
-        if subnet:
-            ip = ip + '/' + subnet
-        ipnet = IPNetwork(ip)
-        if 'community' not in req.json:
-            req.json['community'] = 'public'
-
-        task_id = discover_element(ipnet, req.json['community'], g.client)
-
-        return task_id
+@register.model()
+class netrino_ipam(SQLModel):
+    id = SQLModel.Uuid(default=uuid4, internal=True)
+    parent_id = SQLModel.Uuid()
+    name = SQLModel.Text(null=False)
+    ipdec1 = SQLModel.BigInt(signed=False)
+    ipdec2 = SQLModel.BigInt(signed=False)
+    length = SQLModel.Integer(null=False)
+    version = SQLModel.Integer(default=4)
+    creation_time = SQLModel.DateTime(default=now, readonly=True)
+    prefix_parent = SQLModel.ForeignKey(parent_id, id)
+    unique_prefix = SQLModel.UniqueIndex(ipdec1, ipdec2, length)
+    unique_name = SQLModel.UniqueIndex(name)
+    primary_key = id
