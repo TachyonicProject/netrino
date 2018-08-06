@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright (c) 2018 Christiaan Frans Rademan.
 # All rights reserved.
@@ -29,21 +28,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
-from luxon.core.handlers.cmd import Cmd
+from luxon import g
+from luxon import register
 
-from netrino import cmd
+from luxon.utils.rsa import RSAKey
+from luxon.utils.files import Open
 
+# password option to be completed.
+#@register.resource('rsa', '/create/{password}')
+@register.resource('rsa', '/create')
+def rsa(req, resp, password=None):
+    """Generates a new RSA *credentials.pem*"""
+    root_path = g.app.path
 
-def main(argv):
-    tachweb = Cmd('TachWeb', ini=False, path='/tmp')
-    tachweb()
+    rsakey = RSAKey()
+    pk = rsakey.generate_private_key(password=password)
+    with Open(root_path.rstrip('/') + '/credentials.pem', 'w') as f:
+        f.write(pk)
+        f.write(rsakey.public_key)
 
-
-def entry_point():
-    """Zero-argument entry point for use with setuptools/distribute."""
-    raise SystemExit(main(sys.argv))
-
-
-if __name__ == '__main__':
-    entry_point()
