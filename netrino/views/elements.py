@@ -27,118 +27,156 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-import json
+from uuid import uuid4
 
 from luxon import register
 from luxon import db
+from luxon import router
+from luxon import db
+from luxon.utils import js
+from luxon.utils.pkg import EntryPoints
+from luxon.exceptions import NotFoundError
 from psychokinetic.utils.api import sql_list, obj
 
 from netrino.models.elements import netrino_element
 from netrino.models.elements import netrino_element_interface
 
 
-@register.resource('GET', '/v1/elements', 'operations')
-def list_elements(req, resp):
-    """List all Elements
+@register.resources()
+class Elements(object):
+    def __init__(self):
+        router.add('GET', '/v1/elements',
+                   self.list_elements,
+                   tag='infrastructure:view')
 
-    Returns:
-         List of available Elements
-    """
-    elements = obj(netrino_element)
-    return elements
+        router.add('GET', '/v1/element/{eid}',
+                   self.view_element,
+                   tag='infrastructure:view')
 
-@register.resource('POST', '/v1/element', 'operations')
-def add_element(req, resp):
-    """Add Element
+        router.add('POST', '/v1/element',
+                   self.add_element,
+                   tag='infrastructure:admin')
 
-    Args:
-         name (str): Name of the Element.
-         ipv4 (str): IPv4 address to manage element.
-         ipv6 (str): IPv6 address to manage element.
-         driver (str): Python library that is used to communicate to element.
-         domain (str): Domain if element is to be created inside a domain.
-         enabled (bool): Set to false to make inactive (default is True)
+        router.add('POST', '/v1/element/{eid}',
+                   self.add_element,
+                   tag='infrastructure:admin')
 
-    Returns:
-        Completed model of element in case createion was successful.
-    """
-    element = obj(netrino_element, values=req.json)
-    element.commit()
-    return element
+        router.add(['PUT', 'PATCH'], '/v1/element/{eid}',
+                   self.update_element,
+                   tag='infrastructure:admin')
 
-@register.resource(['PUT', 'PATCH'], '/v1/element/{id}', 'operations')
-def update_element(req, resp, id):
-    """Add Element
+        router.add('DELETE', '/v1/element/{eid}',
+                   self.delete_element,
+                   tag='infrastructure:admin')
 
-    Args:
-         name (str): Name of the Element.
-         ipv4 (str): IPv4 address to manage element.
-         ipv6 (str): IPv6 address to manage element.
-         driver (str): Python library that is used to communicate to element.
-         domain (str): Domain if element is to be created inside a domain.
-         enabled (bool): Set to false to make inactive (default is True)
+        router.add('POST', '/v1/element/{eid}/{interface}',
+                   self.add_interface,
+                   tag='infrastructure:admin')
 
-    Returns:
-        Completed model of element in case creation was successful.
-    """
-    element = obj(netrino_element, id=id, values=req.json)
-    element.commit()
-    return element
+        router.add(['PATCH', 'PUT'], '/v1/element/{eid}/{interface}',
+                   self.update_interface,
+                   tag='infrastructure:admin')
 
-@register.resource('DELETE', '/v1/element/{id}', 'operations')
-def update_element(req, resp, id):
-    """Remove an Element.
+        router.add('DELETE', '/v1/element/{eid}/{interface}',
+                   self.delete_interface,
+                   tag='infrastructure:admin')
 
-    Returns:
-         200 OK if successful.
-    """
-    element = obj(netrino_element, id=id)
-    element.delete()
+        router.add('GET', '/v1/element/{eid}/{interface}',
+                   self.view_interface,
+                   tag='infrastructure:view')
 
-@register.resource('POST', '/v1/element/{id}/driver', 'operations')
-def add_element_driver(req, resp, id):
-    """Add Element Driver
+    def list_elements(self, req, resp):
+        return sql_list(req, 'netrino_element', ('id', 'parent_id', 'name',
+                                                 'enabled', 'creation_time',),
+                       parent_id=None)
 
-    Args:
-         id (str): UUID of the Element.
-         driver (str): Name of the driver.
+    def add_element(self, req, resp, eid=None):
+        element = obj(req, netrino_element)
+        if eid is not None:
+            element['parent_id'] = eid
+        element.commit()
+        return element
 
-    Returns:
-        Completed model of element_driver in case creation was successful.
-    """
-    req.json['element_id'] = id
-    from luxon import GetLogger
-    log = GetLogger(__name__)
-    driver = obj(netrino_element_interface, values=req.json)
-    driver.commit()
-    return driver
+    def view_element(self, req, resp, eid):
+        element = obj(req, netrino_element, sql_id=eid)
+        children = sql_list(req, 'netrino_element', ('id', 'parent_id', 'name',
+                                                     'enabled', 'creation_time',),
+                            parent_id=eid, limit=0)
+        interfaces = sql_list(req, 'netrino_element_interface', ('id',
+                                                                 'interface',
+                                                                 'metadata',),
+                              element_id=eid, limit=0)
+        to_return = element.dict
+        to_return['children'] = children
+        to_return['interfaces'] = interfaces
 
-@register.resource('DELETE', '/v1/element/{id}/driver/{driver}', 'operations')
-def delete_element_driver(req, resp, id, driver):
-    """Delete Element Driver
+        for interfaces in to_return['interfaces']['payload']:
+            interfaces['metadata'] = js.loads(interfaces['metadata'])
 
-    Args:
-         id (str): UUID of the Element.
-         driver (str): Name of the driver.
+        return to_return
 
-    Returns:
-        200 OK if successful.
-    """
-    values = {'element_id': id, "driver": driver}
-    driver = obj(netrino_element_interface, values=values)
-    driver.delete()
+    def update_element(self, req, resp, eid):
+        element = obj(req, netrino_element, sql_id=eid)
+        element.commit()
+        children = sql_list(req, 'netrino_element', ('id', 'parent_id', 'name',
+                                                     'enabled', 'creation_time',),
+                            parent_id=eid, limit=0)
+        interfaces = sql_list(req, 'netrino_element_interface', ('id',
+                                                                 'interface',
+                                                                 'metadata',),
+                              element_id=eid, limit=0)
+        to_return = element.dict
+        to_return['children'] = children
+        to_return['interfaces'] = interfaces
+        return to_return
 
-@register.resource('GET', '/v1/element/{id}/drivers', 'operations')
-def view_element_driver(req, resp, id):
-    """View Element Driver
+    def delete_element(self, req, resp, id):
+        element = obj(req, netrino_element, sql_id=id)
+        element.commit()
+        return element
 
-    Args:
-         id (str): UUID of the Element.
+    def add_interface(self, req, resp, eid, interface):
+        model = EntryPoints('netrino_elements')[interface]()
+        model.update(req.json)
+        with db() as conn:
+            uuid = str(uuid4())
+            conn.execute('INSERT INTO netrino_element_interface' +
+                         ' (id, element_id, interface, metadata)' +
+                         ' VALUES' +
+                         ' (%s, %s, %s, %s)',
+                         (uuid, eid, interface, model.json))
+            conn.commit()
+            return self.view_interface(req, resp, eid, interface)
 
-    Returns:
-        instance of netrino_element_driver model.
-    """
-    sql = "SELECT * FROM netrino_element_driver WHERE element_ID=?"
-    with db() as cur:
-        results = cur.execute(sql, id).fetchall()
-    return json.dumps(results)
+    def view_interface(self, req, resp, eid, interface):
+        with db() as conn:
+            cursor = conn.execute('SELECT * FROM netrino_element_interface' +
+                                  ' WHERE element_id = %s' +
+                                  ' AND interface = %s', (eid, interface,))
+            interface = cursor.fetchone()
+
+            if interface is None:
+                raise NotFoundError('Interface not found')
+
+            interface['metadata'] = js.loads(interface['metadata'])
+            return interface
+
+    def update_interface(self, req, resp, eid, interface):
+        model = EntryPoints('netrino_elements')[interface]()
+        model.update(req.json)
+        with db() as conn:
+            conn.execute('UPDATE netrino_element_interface' +
+                         ' SET metadata = %s' 
+                         ' WHERE element_id = %s' +
+                         ' AND interface = %s', (model.json, eid, interface,))
+            conn.commit()
+        return self.view_interface(req, resp, eid, interface)
+
+    def delete_interface(self, req, resp, eid, interface):
+        with db() as conn:
+            conn.execute('DELETE FROM netrino_element_interface' +
+                         ' WHERE element_id = %s' +
+                         ' AND interface = %s', (eid, interface,))
+            conn.commit()
+
+
