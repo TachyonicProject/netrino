@@ -295,6 +295,9 @@ setup_dict = dict(
             'openstack = netrino.interfaces.openstack.element:Element',
             'contrail = netrino.interfaces.contrail.element:Element'
         ],
+        'netrino_mappers': [
+            'infinitystone_domain = netrino.mappers:domain_from_context'
+        ]
     }
     #    'console_scripts': [
     #        'netrino = netrino.main:entry_point'
