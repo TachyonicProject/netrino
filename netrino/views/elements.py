@@ -30,7 +30,6 @@
 from uuid import uuid4
 
 from luxon import register
-from luxon import db
 from luxon import router
 from luxon import db
 from luxon.utils import js
@@ -39,7 +38,6 @@ from luxon.exceptions import NotFoundError
 from psychokinetic.utils.api import sql_list, obj
 
 from netrino.models.elements import netrino_element
-from netrino.models.elements import netrino_element_interface
 
 
 @register.resources()
@@ -85,6 +83,14 @@ class Elements(object):
                    self.view_interface,
                    tag='infrastructure:view')
 
+        router.add('POST', '/v1/element/{eid}/tag/{tag}',
+                   self.add_tag,
+                   tag='infrastructure:admin')
+
+        router.add('DELETE', '/v1/element/{eid}/tag/{tag}',
+                   self.delete_tag,
+                   tag='infrastructure:admin')
+
     def list_elements(self, req, resp):
         return sql_list(req, 'netrino_element', ('id', 'parent_id', 'name',
                                                  'enabled', 'creation_time',),
@@ -106,9 +112,12 @@ class Elements(object):
                                                                  'interface',
                                                                  'metadata',),
                               element_id=eid, limit=0)
+        tags = sql_list(req, 'netrino_element_tag', ('id','name',),
+                              element_id=eid, limit=0)
         to_return = element.dict
         to_return['children'] = children
         to_return['interfaces'] = interfaces
+        to_return['tags'] = tags
 
         for interfaces in to_return['interfaces']['payload']:
             interfaces['metadata'] = js.loads(interfaces['metadata'])
@@ -118,17 +127,7 @@ class Elements(object):
     def update_element(self, req, resp, eid):
         element = obj(req, netrino_element, sql_id=eid)
         element.commit()
-        children = sql_list(req, 'netrino_element', ('id', 'parent_id', 'name',
-                                                     'enabled', 'creation_time',),
-                            parent_id=eid, limit=0)
-        interfaces = sql_list(req, 'netrino_element_interface', ('id',
-                                                                 'interface',
-                                                                 'metadata',),
-                              element_id=eid, limit=0)
-        to_return = element.dict
-        to_return['children'] = children
-        to_return['interfaces'] = interfaces
-        return to_return
+        return self.view_element(req, resp, eid)
 
     def delete_element(self, req, resp, id):
         element = obj(req, netrino_element, sql_id=id)
@@ -179,4 +178,20 @@ class Elements(object):
                          ' AND interface = %s', (eid, interface,))
             conn.commit()
 
+    def add_tag(self, req, resp, eid, tag):
+        tag_entry_id = str(uuid4())
+        with db() as conn:
+            conn.execute('INSERT INTO netrino_element_tag' +
+                         ' (id, name, element_id)' +
+                         ' VALUES' +
+                         ' (%s, %s, %s)', (tag_entry_id,tag, eid))
+            conn.commit()
+            return self.view_element(req, resp, eid)
 
+    def delete_tag(self, req, resp, eid, tag):
+        with db() as conn:
+            conn.execute('DELETE FROM netrino_element_tag' +
+                         ' WHERE element_id = %s' +
+                         ' AND name = %s', (eid, tag,))
+            conn.commit()
+            return self.view_element(req, resp, eid)
