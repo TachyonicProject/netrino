@@ -33,34 +33,30 @@ from luxon import register
 from luxon import SQLModel
 from luxon.utils.timezone import now
 
-
-from luxon.utils.timezone import now
-
 @register.model()
 class netrino_element(SQLModel):
     id = SQLModel.Uuid(default=uuid4, internal=True)
     parent_id = SQLModel.Uuid()
     name = SQLModel.Text(null=False)
-    ipv4 = SQLModel.Text()
-    ipv6 = SQLModel.Text()
     enabled = SQLModel.Boolean(default=True)
     creation_time = SQLModel.DateTime(default=now, readonly=True)
+    element_parent = SQLModel.ForeignKey(parent_id, id)
+    unique_element = SQLModel.UniqueIndex(name)
     primary_key = id
-    unique_element_ipv4 = SQLModel.UniqueIndex(ipv4)
-    unique_element_ipv6 = SQLModel.UniqueIndex(ipv6)
-    elements = SQLModel.Index(id)
+
 
 @register.model()
 class netrino_element_interface(SQLModel):
     id = SQLModel.Uuid(default=uuid4, internal=True)
     element_id = SQLModel.Uuid(null=False)
     interface = SQLModel.Text(null=False)
-    metadata = SQLModel.Text()
+    metadata = SQLModel.LongText()
     creation_time = SQLModel.DateTime(default=now, readonly=True)
     element_ref = SQLModel.ForeignKey(element_id, netrino_element.id)
     unique_element_interface = SQLModel.UniqueIndex(element_id, interface)
     element_driver = SQLModel.Index(element_id, interface)
     primary_key = id
+
 
 @register.model()
 class netrino_element_tag(SQLModel):

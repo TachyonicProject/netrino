@@ -31,4 +31,9 @@ import netrino.models
 
 import luxon.resources.wsgi.index
 
+from luxon import register
+from psychokinetic.middleware.client import Client
+
+register.middleware(Client)
+
 import netrino.views

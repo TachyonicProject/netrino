@@ -28,8 +28,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
 from netrino.utils.interface import get_element_metadata
+from luxon import GetLogger
+
+log = GetLogger(__name__)
 
 class Interface(object):
     def __init__(self, uuid, interface):
         self.uuid = uuid
         self.metadata = get_element_metadata(uuid, interface)
+        if not self.metadata:
+            log.info("Element '%s' not found" % uuid)
+            self.metadata = {}

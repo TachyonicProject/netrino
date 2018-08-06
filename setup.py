@@ -286,11 +286,23 @@ setup_dict = dict(
             'netconf = netrino.interfaces.netconf.discover:discover'
         ],
         'netrino_interfaces': [
-            'netconf = netrino.interfaces.netconf.interface:Interface'
+            'netconf = netrino.interfaces.netconf.interface:Interface',
+            'openstack = netrino.interfaces.openstack.interface:Interface',
+            'contrail = netrino.interfaces.contrail.interface:Interface'
         ],
         'netrino_elements': [
-            'netconf = netrino.interfaces.netconf.element:Element'
+            'netconf = netrino.interfaces.netconf.element:Element',
+            'openstack = netrino.interfaces.openstack.element:Element',
+            'contrail = netrino.interfaces.contrail.element:Element'
         ],
+        'netrino_mappers': [
+            'infinitystone_domain = netrino.mappers:domain_from_context'
+        ],
+        'netrino_resources': [
+            'element = netrino.resources.element.element:Element',
+            'ipv4 = netrino.resources.ipv4.ipv4:IPv4',
+            'ipv6 = netrino.resources.ipv6.ipv6:IPv6',
+        ]
     }
     #    'console_scripts': [
     #        'netrino = netrino.main:entry_point'

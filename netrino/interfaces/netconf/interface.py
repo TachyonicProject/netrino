@@ -27,59 +27,45 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-import atexit
-
 from netrino.interfaces.interface import Interface as BaseInterface
-from luxon.exceptions import FieldMissing
 
 # (@Vuader) Note: until ncclient has merged Tachyonic's pull request,
-# remember to clone ncclient from TachyonicProject.
+# remember to clone & install ncclient from TachyonicProject.
 from ncclient import manager
+from netrino.helpers.yang import RFC7951dict
+from luxon.exceptions import NotFoundError
 
-from luxon import GetLogger
-
-log = GetLogger(__name__)
 
 class Interface(BaseInterface):
     """Netconf Interface/driver.
 
-    Acts as ncclient.manager connection obj. Call it or use with with:
+    Acts as ncclient.manager connection obj. Use with with:
 
     Eg.
 
     .. code:: python
 
-        manager = Interface('element-uuid')
-        m = manager()
-        m.lock()
-
-
-    or
-
-    .. code:: python
-
-        manager = Interface('element-uuid')
-        with manager() as m:
+        with Interface('element-uuid') as m:
             m.lock()
-
-    Args:
-        uuid(str): UUID of element
 
     Element credentials obtained from metadata in database.
 
+    Args:
+        uuid (str): UUID of element
+        default_operation (str): default Netconf operation. (defaults to merge)
+        target (str): Netconf target. (defaults to candidate)
     """
-    def __init__(self, uuid):
+
+    def __init__(self, uuid, default_operation="merge", target="candidate"):
         super().__init__(uuid, "netconf")
         self.conn = None
+        self.default_operation = default_operation
+        self.target = target
 
-    def __call__(self):
         self.conn = manager.connect(**self.metadata)
-        # (@Vuader) If this object is called multiple times,
-        # the exit function is registered multiple times atexit
-        # So if it is called twice eg, the close() method is run twice.
-        # Does not seem ideal.
-        atexit.register(self.close)
-        return self
+        if not self.conn:
+            raise NotFoundError(
+                "Unable to connect to element '%s'" % self.uuid)
 
     def __enter__(self):
         return self
@@ -90,16 +76,22 @@ class Interface(BaseInterface):
     def __getattr__(self, name):
         return getattr(self.conn, name)
 
-    def close(self):
-        """Close ncclient manager connection if it is still open.
+    def config(self, req):
+        """Update element configuration via ncclient's .edit-config()
 
-         Used with atexit.
+        Args:
+            req (obj): Luxon WSGI request object containing context.api and
+                       json body
+
+        Returns:
+             str version of ncclient edit_config result.
         """
-        try:
-            self.conn.close_session()
-        except:
-            pass
-
-    #def edit_config(self, *args, **kwargs):
-
-
+        rfc7951dict = RFC7951dict(req.context.api)
+        config = rfc7951dict.to_etree(req.json)
+        self.conn.lock()
+        result = self.conn.edit_config(config=config,
+                                      default_operation=self.default_operation,
+                                      target=self.target)
+        self.conn.commit()
+        self.conn.unlock()
+        return {'result': str(result)}
