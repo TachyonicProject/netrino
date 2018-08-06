@@ -30,7 +30,6 @@
 from uuid import uuid4
 
 from luxon import register
-from luxon import db
 from luxon import router
 from luxon import db
 from luxon.utils import js
