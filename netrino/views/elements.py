@@ -38,6 +38,7 @@ from luxon.exceptions import NotFoundError
 from psychokinetic.utils.api import sql_list, obj
 
 from netrino.models.elements import netrino_element
+from netrino.helpers.rsa import RSAKey
 
 
 @register.resources()
@@ -104,6 +105,7 @@ class Elements(object):
         return element
 
     def view_element(self, req, resp, eid):
+        rsakey = RSAKey()
         element = obj(req, netrino_element, sql_id=eid)
         children = sql_list(req, 'netrino_element', ('id', 'parent_id', 'name',
                                                      'enabled', 'creation_time',),
@@ -120,7 +122,9 @@ class Elements(object):
         to_return['tags'] = tags
 
         for interfaces in to_return['interfaces']['payload']:
-            interfaces['metadata'] = js.loads(interfaces['metadata'])
+            interfaces['metadata'] = js.loads(
+                rsakey.decrypt(interfaces['metadata'])
+            )
 
         return to_return
 
@@ -135,6 +139,7 @@ class Elements(object):
         return element
 
     def add_interface(self, req, resp, eid, interface):
+        rsakey = RSAKey()
         model = EntryPoints('netrino_elements')[interface]()
         model.update(req.json)
         with db() as conn:
@@ -143,11 +148,13 @@ class Elements(object):
                          ' (id, element_id, interface, metadata)' +
                          ' VALUES' +
                          ' (%s, %s, %s, %s)',
-                         (uuid, eid, interface, model.json))
+                         (uuid, eid, interface,
+                          rsakey.encrypt(model.json)))
             conn.commit()
             return self.view_interface(req, resp, eid, interface)
 
     def view_interface(self, req, resp, eid, interface):
+        rsakey = RSAKey()
         with db() as conn:
             cursor = conn.execute('SELECT * FROM netrino_element_interface' +
                                   ' WHERE element_id = %s' +
@@ -157,17 +164,21 @@ class Elements(object):
             if interface is None:
                 raise NotFoundError('Interface not found')
 
-            interface['metadata'] = js.loads(interface['metadata'])
+            interface['metadata'] = js.loads(
+                rsakey.decrypt(interface['metadata'])
+            )
             return interface
 
     def update_interface(self, req, resp, eid, interface):
+        rsakey = RSAKey()
         model = EntryPoints('netrino_elements')[interface]()
         model.update(req.json)
         with db() as conn:
             conn.execute('UPDATE netrino_element_interface' +
                          ' SET metadata = %s' 
                          ' WHERE element_id = %s' +
-                         ' AND interface = %s', (model.json, eid, interface,))
+                         ' AND interface = %s', (rsakey.encrypt(model.json),
+                                                 eid, interface,))
             conn.commit()
         return self.view_interface(req, resp, eid, interface)
 
