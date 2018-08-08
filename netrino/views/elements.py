@@ -93,7 +93,7 @@ class Elements(object):
                    tag='infrastructure:admin')
 
     def list_elements(self, req, resp):
-        return sql_list(req, 'netrino_element', ('id', 'parent_id', 'name',
+        return sql_list(req, 'netrino_element', ('id', 'name',
                                                  'enabled', 'creation_time',),
                        parent_id=None)
 
@@ -107,21 +107,23 @@ class Elements(object):
     def view_element(self, req, resp, eid):
         rsakey = RSAKey()
         element = obj(req, netrino_element, sql_id=eid)
-        children = sql_list(req, 'netrino_element', ('id', 'parent_id', 'name',
-                                                     'enabled', 'creation_time',),
-                            parent_id=eid, limit=0)
-        interfaces = sql_list(req, 'netrino_element_interface', ('id',
-                                                                 'interface',
-                                                                 'metadata',),
-                              element_id=eid, limit=0)
-        tags = sql_list(req, 'netrino_element_tag', ('id','name',),
-                              element_id=eid, limit=0)
+
+        with db() as conn:
+            children = conn.execute("SELECT id, name, enabled, creation_time" +
+                                      " FROM netrino_element" +
+                                      " WHERE parent_id = %s", eid).fetchall()
+            interfaces = conn.execute("SELECT interface, metadata, creation_time" +
+                                      " FROM netrino_element_interface" +
+                                      " WHERE element_id = %s", eid).fetchall()
+            tags = conn.execute("SELECT name" +
+                                      " FROM netrino_element_tag" +
+                                      " WHERE element_id = %s", eid).fetchall()
         to_return = element.dict
         to_return['children'] = children
         to_return['interfaces'] = interfaces
         to_return['tags'] = tags
 
-        for interfaces in to_return['interfaces']['payload']:
+        for interfaces in to_return['interfaces']:
             interfaces['metadata'] = js.loads(
                 rsakey.decrypt(interfaces['metadata'])
             )
@@ -156,7 +158,8 @@ class Elements(object):
     def view_interface(self, req, resp, eid, interface):
         rsakey = RSAKey()
         with db() as conn:
-            cursor = conn.execute('SELECT * FROM netrino_element_interface' +
+            cursor = conn.execute('SELECT interface, metadata, creation_time' +
+                                  ' FROM netrino_element_interface' +
                                   ' WHERE element_id = %s' +
                                   ' AND interface = %s', (eid, interface,))
             interface = cursor.fetchone()
