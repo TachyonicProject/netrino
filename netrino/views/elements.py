@@ -38,7 +38,7 @@ from luxon.exceptions import NotFoundError
 from psychokinetic.utils.api import sql_list, obj
 
 from netrino.models.elements import netrino_element
-from netrino.helpers.rsa import RSAKey
+from netrino.helpers.crypto import Crypto
 
 
 @register.resources()
@@ -105,7 +105,7 @@ class Elements(object):
         return element
 
     def view_element(self, req, resp, eid):
-        rsakey = RSAKey()
+        crypto = Crypto()
         element = obj(req, netrino_element, sql_id=eid)
 
         with db() as conn:
@@ -125,7 +125,7 @@ class Elements(object):
 
         for interfaces in to_return['interfaces']:
             interfaces['metadata'] = js.loads(
-                rsakey.decrypt(interfaces['metadata'])
+                crypto.decrypt(interfaces['metadata'])
             )
 
         return to_return
@@ -141,7 +141,7 @@ class Elements(object):
         return element
 
     def add_interface(self, req, resp, eid, interface):
-        rsakey = RSAKey()
+        crypto = Crypto()
         model = EntryPoints('netrino_elements')[interface]()
         model.update(req.json)
         with db() as conn:
@@ -151,12 +151,12 @@ class Elements(object):
                          ' VALUES' +
                          ' (%s, %s, %s, %s)',
                          (uuid, eid, interface,
-                          rsakey.encrypt(model.json)))
+                          crypto.encrypt(model.json)))
             conn.commit()
             return self.view_interface(req, resp, eid, interface)
 
     def view_interface(self, req, resp, eid, interface):
-        rsakey = RSAKey()
+        crypto = Crypto()
         with db() as conn:
             cursor = conn.execute('SELECT interface, metadata, creation_time' +
                                   ' FROM netrino_element_interface' +
@@ -168,19 +168,21 @@ class Elements(object):
                 raise NotFoundError('Interface not found')
 
             interface['metadata'] = js.loads(
-                rsakey.decrypt(interface['metadata'])
+                crypto.decrypt(interface['metadata'])
             )
             return interface
 
     def update_interface(self, req, resp, eid, interface):
-        rsakey = RSAKey()
+        current = self.view_interface(req, resp, eid, interface)
+        crypto = Crypto()
         model = EntryPoints('netrino_elements')[interface]()
+        model.update(current['metadata'])
         model.update(req.json)
         with db() as conn:
             conn.execute('UPDATE netrino_element_interface' +
                          ' SET metadata = %s' 
                          ' WHERE element_id = %s' +
-                         ' AND interface = %s', (rsakey.encrypt(model.json),
+                         ' AND interface = %s', (crypto.encrypt(model.json),
                                                  eid, interface,))
             conn.commit()
         return self.view_interface(req, resp, eid, interface)

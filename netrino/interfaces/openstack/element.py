@@ -33,10 +33,8 @@ from luxon import Model
 
 
 class Element(Model):
-    id = Model.Uuid(default=uuid4, internal=True)
     keystone_url = Model.String(null=False)
     username = Model.String(null=False)
     password = Model.String(null=False)
     region = Model.String(null=True)
     interface = Model.Enum('admin', 'public', 'internal', null=True)
-    primary_key = id

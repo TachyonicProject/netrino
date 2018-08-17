@@ -1,1 +1,1 @@
-from netrino.cmd import pki
+from netrino.cmd import key

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Frans Rademan.
+# Copyright (c) 2018 Christiaan Rademan.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,23 +27,20 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-
 from luxon import g
-from luxon import register
+from luxon.utils.singleton import Singleton
+from luxon.utils.crypto import Crypto as CryptoLuxon
 
-from luxon.utils.rsa import RSAKey
-from luxon.utils.files import Open
+class Crypto(CryptoLuxon, metaclass=Singleton):
+    """Helper wrapper for Crypto Luxon utility.
 
-# password option to be completed.
-#@register.resource('rsa', '/create/{password}')
-@register.resource('rsa', '/create')
-def rsa(req, resp, password=None):
-    """Generates a new RSA *credentials.pem*"""
-    root_path = g.app.path
-
-    rsakey = RSAKey()
-    pk = rsakey.generate_private_key(password=password)
-    with Open(root_path.rstrip('/') + '/credentials.pem', 'w') as f:
-        f.write(pk)
-        f.write(rsakey.public_key)
-
+    Used for signing/encryption of secret data using 'credentials.key'
+    """
+    def __init__(self):
+        super().__init__()
+        with open(g.app.path.rstrip('/') + '/credentials.key', 'rb') as key_file:
+            key_str = key_file.read()
+            key = key_str[0:32]
+            iv = key_str[32:48] 
+            self.load_key(key)
+            self.load_iv(iv)
