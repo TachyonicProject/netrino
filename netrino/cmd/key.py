@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Frans Rademan, David Kruger.
+# Copyright (c) 2018 Christiaan Frans Rademan.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,28 +27,22 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-from uuid import uuid4
 
+from luxon import g
 from luxon import register
-from luxon import SQLModel
-from luxon.utils.timezone import now
 
-@register.model()
-class netrino_prefix(SQLModel):
-    id = SQLModel.Uuid(default=uuid4, internal=True)
-    name = SQLModel.Text(null=False)
-    prefix = SQLModel.String(null=False)
-    version = SQLModel.Integer(default=4)
-    creation_time = SQLModel.DateTime(default=now, readonly=True)
-    primary_key = id
+from luxon.utils.crypto import Crypto
+from luxon.utils.files import Open
 
+# password option to be completed.
+#@register.resource('rsa', '/create/{password}')
+@register.resource('key', '/create')
+def crypto(req, resp, password=None):
+    """Generates a new *credentials.key*"""
+    root_path = g.app.path
 
-@register.model()
-class netrino_prefix_tag(SQLModel):
-    id = SQLModel.Uuid(default=uuid4, internal=True)
-    prefix = SQLModel.Uuid()
-    tag = SQLModel.Text(null=False)
-    creation_time = SQLModel.DateTime(default=now, readonly=True)
-    unique_prefix_tag = SQLModel.UniqueIndex(prefix, tag)
-    prefix_tag_prefix_ref = SQLModel.ForeignKey(prefix, netrino_prefix.id)
-    primary_key = id
+    crypto = Crypto()
+    key = crypto.generate_key(32*8)
+    iv = crypto.generate_iv(16*8)
+    with Open(root_path.rstrip('/') + '/credentials.key', 'wb') as f:
+        f.write(key + iv)

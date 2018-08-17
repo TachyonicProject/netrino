@@ -33,35 +33,87 @@ from luxon import router
 from luxon import db
 from luxon.utils import js
 
+from pyipcalc import (IPNetwork,
+                      ip_to_int,
+                      int_to_ip,
+                      int_64_to_128,
+                      int_128_to_64)
+
+from netrino.models.ipam import netrino_ipam
+
+
+def format_prefix(prefix):
+    pf = {}
+    pf['id'] = prefix['id']
+    pf['parent_id'] = prefix['parent_id']
+    pf['version'] = prefix['version']
+    if prefix['version'] == 4:
+        pf['prefix'] = int_to_ip(prefix['ipdec1'])
+    else:
+        ipdec = int_64_to_128(prefix['ipdec1'],
+                              prefix['ipdec2'])
+        pf['prefix'] = int_to_ip(ipdec, 6)
+
+    pf['length'] = prefix['length']
+    return pf
+
 
 @register.resources()
 class IPam(object):
     def __init__(self):
-        router.add('GET', '/v1/ipam',
+        router.add('GET', '/v1/prefixes/{version}',
                    self.list_prefixes,
                    tag='infrastructure:view')
 
-        router.add('GET', '/v1/ipam/{pid}',
+        router.add('GET', '/v1/prefix/{pid}',
                    self.view_prefix,
                    tag='infrastructure:view')
 
-        router.add('POST', '/v1/ipam',
+        router.add('POST', '/v1/prefix',
                    self.add_prefix,
                    tag='infrastructure:admin')
 
-        router.add(['PUT', 'PATCH'], '/v1/ipam/{pid}',
+        router.add(['PUT', 'PATCH'], '/v1/prefix/{pid}',
                    self.update_prefix,
                    tag='infrastructure:admin')
 
-        router.add('DELETE', '/v1/ipam/{pid}',
+        router.add('DELETE', '/v1/prefix/{pid}',
                    self.delete_prefix,
                    tag='infrastructure:admin')
 
-    def list_prefixes(self, req, resp):
-        pass
+
+    def list_prefixes(self, req, resp, version):
+
+        prefixes = []
+
+        with db() as conn:
+            crsr = conn.execute("SELECT * FROM netrino_ipam" +
+                                " WHERE parent_id IS NULL")
+            results = crsr.fetchall()
+
+        for pf in results:
+            prefixes.append(format_prefix(pf))
+
+        return prefixes
+        
 
     def add_prefix(self, req, resp):
-        pass
+        ipam = netrino_ipam()
+        ipam['parent_id'] = req.json.get('parent_id')
+        ipam['name'] = req.json.get('name')
+        prefix = req.json.get('prefix')
+        prefix = IPNetwork(prefix)
+
+        network = prefix.network()
+        version = prefix.version()
+        length = prefix._bits
+
+        ipam['length'] = length
+        ipam['version'] = version
+        ipam['ip'] = (ip_to_int(network)).to_bytes(16, byteorder="big")
+
+        ipam.commit()
+        #return ipam
 
     def view_prefix(self, req, resp, pid):
         pass
