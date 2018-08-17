@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Rademan.
+# Copyright (c) 2018 Christiaan Frans Rademan.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,16 +27,22 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
+
 from luxon import g
-from luxon.utils.singleton import Singleton
-from luxon.utils.rsa import RSAKey as RSAKeyLuxon
+from luxon import register
 
+from luxon.utils.crypto import Crypto
+from luxon.utils.files import Open
 
-class RSAKey(RSAKeyLuxon, metaclass=Singleton):
-    """Helper wrapper for RSAKey Luxon utility.
+# password option to be completed.
+#@register.resource('rsa', '/create/{password}')
+@register.resource('key', '/create')
+def crypto(req, resp, password=None):
+    """Generates a new *credentials.key*"""
+    root_path = g.app.path
 
-    Used for signing/encryption of secret data using 'credentials.pem'
-    """
-    def __init__(self):
-        super().__init__()
-        self.load_pem_key_file(g.app.path.rstrip('/') + '/credentials.pem')
+    crypto = Crypto()
+    key = crypto.generate_key(32*8)
+    iv = crypto.generate_iv(16*8)
+    with Open(root_path.rstrip('/') + '/credentials.key', 'wb') as f:
+        f.write(key + iv)

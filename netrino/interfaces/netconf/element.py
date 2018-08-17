@@ -27,17 +27,13 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-from uuid import uuid4
-
 from luxon import Model
 
 
 class Element(Model):
-    id = Model.Uuid(default=uuid4, internal=True)
     host = Model.String(null=False)
     username = Model.String(null=False)
     password = Model.String(null=True)
     port = Model.Integer(null=True)
     timeout = Model.Integer(null=True)
     private_key = Model.Text(null=True)
-    primary_key = id

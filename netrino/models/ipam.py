@@ -34,16 +34,21 @@ from luxon import SQLModel
 from luxon.utils.timezone import now
 
 @register.model()
-class netrino_ipam(SQLModel):
+class netrino_prefix(SQLModel):
     id = SQLModel.Uuid(default=uuid4, internal=True)
-    parent_id = SQLModel.Uuid()
     name = SQLModel.Text(null=False)
-    ipdec1 = SQLModel.BigInt(signed=False)
-    ipdec2 = SQLModel.BigInt(signed=False)
-    length = SQLModel.Integer(null=False)
+    prefix = SQLModel.String(null=False)
     version = SQLModel.Integer(default=4)
     creation_time = SQLModel.DateTime(default=now, readonly=True)
-    prefix_parent = SQLModel.ForeignKey(parent_id, id)
-    unique_prefix = SQLModel.UniqueIndex(ipdec1, ipdec2, length)
-    unique_name = SQLModel.UniqueIndex(name)
+    primary_key = id
+
+
+@register.model()
+class netrino_prefix_tag(SQLModel):
+    id = SQLModel.Uuid(default=uuid4, internal=True)
+    prefix = SQLModel.Uuid()
+    tag = SQLModel.Text(null=False)
+    creation_time = SQLModel.DateTime(default=now, readonly=True)
+    unique_prefix_tag = SQLModel.UniqueIndex(prefix, tag)
+    prefix_tag_prefix_ref = SQLModel.ForeignKey(prefix, netrino_prefix.id)
     primary_key = id
