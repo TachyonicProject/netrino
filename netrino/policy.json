@@ -20,6 +20,8 @@
     "roles:view": "$staff",
     "domains:admin": "$role:root",
     "domains:view": "$login",
+    "endpoints:admin": "$role:root",
+    "endpoints:view": "$login",
     "tenants:admin": "$staff",
     "tenants:view": "$staff or $customer",
     "infrastructure:admin": "$role:root or $role:ops",
