@@ -29,84 +29,586 @@
 # THE POSSIBILITY OF SUCH DAMAGE.
 from netrino.ext import Radix
 from netrino.models.ipam import netrino_prefix, netrino_prefix_tag
+from netrino.utils.ipam import v6_where_le, v6_where_lt
+from netrino.utils.ipam import v6_where_ge, other_half
+from luxon import db
+
+from luxon.exceptions import NotFoundError, ValidationError
+from uuid import uuid4
+from luxon.utils.timezone import now
+from luxon.core.config.defaults import defaults
 
 from pyipcalc import IPNetwork, IPIter
+from pyipcalc import ip_to_int, int_128_to_32
+from pyipcalc import int_to_ip, int_32_to_128
 
+from luxon import GetLogger
+
+log = GetLogger(__name__)
 
 class IPAM(object):
-    def __init__(self):
-        self._rtree = Radix()
-        self._id_references = {}
-        self._id_tags = {}
-        self._avail = {}
+    #Todo: instead of passing conn object around - how about setting attribute?
+    def _check_if_free(self, ip, rib):
+        int_ip = ip_to_int(ip.network())
+        split_ip = int_128_to_32(int_ip)
+        sql = "SELECT free FROM netrino_prefix WHERE prefix_len=? AND " \
+              "version=? AND rib=? AND a4=?"
+        vals = [ip._bits, ip.version(), rib, split_ip[3]]
+        if ip.version() == 6:
+            sql += " AND a1=? AND a2=? AND a3=?"
+            vals += [split_ip[0],split_ip[1],split_ip[2]]
+        with db() as conn:
+            cur = conn.execute(sql, vals)
+            result = cur.fetchone()
+            if result:
+                return result['free']
+        return True
 
-    def add_prefix(self, name, prefix):
-        prefix = IPNetwork(prefix)
-        model = netrino_prefix()
-        model['name'] = name
-        model['prefix'] = prefix.prefix()
-        self._rtree.add(prefix.prefix())
-        self._id_references[prefix.prefix()] = model['id']
-        #if ((prefix.version() == 4 and prefix._bits < 32) or
-        #        (prefix.version() == 6 and prefix._bits < 128)):
-        #    test = IPIter(prefix.prefix(), prefix._bits + 1)
-        #    for a in test:
-        #        print(a)
-        return model
+    def _closest_free_in_prefix(self, conn, prefix_ids, prefix_len):
+        """Finds free prefix
 
-    def add_tag(self, prefix, tag):
+        Does a top-down search. For a given prefix_len, will find the smallest
+        free prefix that may contain a prefix of length prefix_len, but falls
+        within the range of one of the prefixes with id in list of prefix_ids
+        """
+        where = ['parent=?' for pid in prefix_ids]
+        where = ' OR '.join(where)
+        sql = "SELECT * " \
+              "FROM netrino_prefix WHERE free AND prefix_len<? AND (%s) " \
+              "ORDER BY prefix_len DESC" % where
+        row = conn.execute(sql,[prefix_len]+prefix_ids).fetchone()
+        if not row:
+            # None of the supernets contained a free block of requested size
+            # Grabbing the first available free supernet
+            where = ['id=?' for pid in prefix_ids]
+            where = ' OR '.join(where)
+            sql = "SELECT * FROM netrino_prefix WHERE free AND (%s)" % where
+            free = conn.execute(sql,prefix_ids).fetchone()
+            if free:
+                # Whatever is using this function, will most likely want
+                # to use free['parent'], but since this is the supernet, it
+                # won't have a parent. So being nice and setting the value
+                # of parent to it's own id
+                free['parent'] = free['id']
+                return free
+            return None
+
+        return row
+
+    def _closest_above_prefix(self, conn, supernet, prefix, rib):
+        """Finds Closest/Smallest prefix
+
+        Does a bottom up search. For a given prefix, will look for the
+        smallest free prefix that contains this prefix, but falls
+        in range under prefix with id prefix_id.
+        """
+        sup_int = int_32_to_128(supernet['a1'], supernet['a2'], supernet['a3'],
+                                supernet['a4'])
+        sup_ip = int_to_ip(sup_int,supernet['version'])
+        sup_net = IPNetwork('%s/%s' % (sup_ip,supernet['prefix_len']))
+        gwhere, gvals = v6_where_ge(sup_int)
+        lwhere, lvals = v6_where_lt(sup_int+sup_net._size)
+        sql = "SELECT * FROM netrino_prefix WHERE (%s) AND (%s) AND free " \
+              "AND prefix_len <? AND rib=? ORDER BY prefix_len DESC" % (
+              gwhere, lwhere,)
+        rows = conn.execute(sql, gvals+lvals+(prefix._bits,rib,)).fetchall()
+        for r in rows:
+            ip = int_32_to_128(r['a1'], r['a2'], r['a3'], r['a4'])
+            ip = int_to_ip(ip, r['version'])
+            ip = IPNetwork('%s/%s' % (ip, r['prefix_len'],))
+            if prefix in ip:
+                # Whatever is using this function, will most likely want
+                # to use ip['parent']. But if this is the supernet, it
+                # won't have a parent. So being nice and setting the value
+                # of parent to it's own id
+                if not r['parent']:
+                    r['parent'] = r['id']
+                return ip, r
+        return None, None
+
+    def _get_supernet(self, conn, ip, rib, length, version=4):
+        sql = "SELECT * FROM netrino_prefix " \
+              "WHERE version=4 AND a4<=? AND type != 'hidden' " \
+              "AND rib=? AND prefix_len<? ORDER BY prefix_len"
+        vals = (ip,rib,length)
+        if version == 6:
+            where, vals = v6_where_le(ip)
+            sql = "SELECT * FROM netrino_prefix " \
+                  "WHERE (%s) AND version==6 AND type != 'hidden' AND " \
+                  "rib=? AND prefix_len<? ORDER BY prefix_len" % where
+            vals += (rib,length,)
+        ip = IPNetwork('%s/%s' % (int_to_ip(ip,version),length,))
+        candidates = conn.execute(sql,vals).fetchall()
+        for row in candidates:
+            cip = int_32_to_128(row['a1'],row['a2'],row['a3'],row['a4'])
+            cip = int_to_ip(cip,version)
+            candidate = IPNetwork('%s/%s' % (cip,row['prefix_len']))
+            if ip in candidate:
+                return candidate,row
+        return None,None
+
+    def _get_parent(self, conn, ip, prefix_len, version, rib):
+        supernet_net, supernet = self._get_supernet(conn, ip, rib, version)
+        if supernet is None:
+            return None
+        sql = "SELECT id,a1,a2,a3,a4,prefix_len FROM netrino_prefix " \
+              "WHERE (%s) AND version=? AND prefix_len<? " \
+              "AND type!='hidden' " \
+              "AND rib=? ORDER BY prefix_len DESC"
+        where = "a4<=? AND a4>=?"
+        vals = (ip,supernet._ip)
+        if version==6:
+            lwhere, lvals = v6_where_lt(ip)
+            gwhere, gvals = v6_where_ge(ip)
+            where = "(%s) AND (%s)" % (lwhere,gwhere,)
+            vals = lvals + gvals
+        sql = sql % where
+        ip = IPNetwork('%s/%s' % (int_to_ip(ip, version),prefix_len))
+        cur = conn.execute(sql,vals + (version,prefix_len,rib))
+        candidates = cur.fetchall()
+        for row in candidates:
+            cip = int_32_to_128(row['a1'], row['a2'], row['a3'],
+                               row['a4'])
+            cip = int_to_ip(cip,version)
+            candidate = IPNetwork('%s/%s' % (cip,row['prefix_len']))
+            if ip in candidate:
+                return row['id']
+        return None
+
+    def _update_children(self, conn, old_parent, new_parent, prefix_len,
+                         prefix, rib='default'):
+        lower = ip_to_int(prefix.network())
+        upper = ip_to_int(prefix.last())
+        lwhere, lvals = v6_where_le(upper)
+        gwhere, gvals = v6_where_ge(lower)
+        sql = 'UPDATE netrino_prefix SET parent=? WHERE parent=? ' \
+              'AND prefix_len>? AND rib=? AND (%s) AND (%s)' % (lwhere,gwhere)
+        vals = (prefix_len,rib)+lvals+gvals
+        if old_parent is None:
+            sql = sql.replace('WHERE parent=?','WHERE parent IS NULL')
+        else:
+            vals = (old_parent,) + vals
+        conn.execute(sql, (new_parent,) + vals)
+
+    def _populate(self,conn,prefix,length,parent,ver,rib,type,specific=None):
+        """Creates prefix of desired size, as well as remaining prefixes
+        in parent block.
+        """
+        # Not using model here, rather using db conn object,
+        # so that we only do one commit after all has been added
+        sql = 'INSERT INTO netrino_prefix VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)'
+        prefix_len = prefix._bits
+        children = IPIter(prefix.prefix(), prefix_len + 1)
+        for child in children:
+            uid = str(uuid4())
+            a1, a2, a3, a4 = int_128_to_32(ip_to_int(child.network()))
+            conn.execute(sql, (uid,
+                               a1, a2, a3, a4,
+                               "Available",
+                               parent,
+                               ver,
+                               False,
+                               rib,
+                               prefix_len + 1,
+                               'hidden',
+                               now()))
+            # One of the children needs to remain free. (The one that does
+            # not contain the prefix that will be allocated.
+            if specific:
+                if specific in child:
+                    ipnet = child
+                    last_id = uid
+                else:
+                    # When providing a specific prefix to be allocated,
+                    # and this child does not contain that prefix, we need
+                    # to set free=True
+                    conn.execute('UPDATE netrino_prefix SET free=? WHERE id=?',
+                                 (True, uid))
+            else:
+                if child.network() == prefix.network():
+                    last_id = uid
+
+        if not specific:
+            # when we don't specify a specific prefix to be allocated
+            ipnet = IPNetwork(prefix.network() + '/' + str(prefix_len + 1))
+            # The last/higher child will remain free
+            conn.execute('UPDATE netrino_prefix SET free=? WHERE id=?',
+                         (True, uid))
+
+        # Found one!
+        if prefix_len + 1 == length:
+            conn.execute('UPDATE netrino_prefix SET type=? WHERE id=?',
+                         (type, last_id))
+            if specific:
+                return specific
+            return IPNetwork('%s/%s' % (prefix.network(), length))
+
+        return self._populate(conn,ipnet,length,parent,ver,rib,type,specific)
+
+
+    def _reserve(self, conn, prefix, prefix_id, length, parent, version, rib,
+                 type, specific=None):
+        """Reserves a prefix so that it can be allocated.
+
+        Called when free block of requested size does not yet exist. Will
+        set free=false for prefix_id, and call _populate() to create all
+        necessary blocks.
+
+        Args:
+            conn (obj): db conn obj.
+            prefix (obj): IPNetwork() prefix to allocate out of
+            prefix_id (str): UUID of this specific free prefix
+            lenght (int): Prefix length to be allocated.
+            parent (str): UUID of free parent prefix to allocate from.
+            version (int): IP version 4 or 6
+            rib (str): Name of rib
+            type (str): The type to set on the eventually allocated prefix
+            specific (obj): specific IPNetwork() to allocate
+        """
+        result = None
+        sql_reserve = 'UPDATE netrino_prefix SET free=? WHERE id=?'
+        conn.execute(sql_reserve, (False, prefix_id,))
+        result = self._populate(conn, prefix, length, parent,
+                                version, rib, type, specific)
+
+        return result
+
+    def allocate_prefix(self, name, prefix, prefix_type='container',
+                            rib='default'):
+        """Allocates a prefix.
+
+        Basically just sets free=false. If it does not exist yet, will be
+        created and ipam populated
+        """
+        # First verifying that it is free
+        ip = IPNetwork(prefix)
+        free = self._check_if_free(ip,rib)
+        if not free:
+            raise ValidationError(message="Unable to allocate '%s', not free"
+                                          % prefix)
+        allocated = self.add_prefix(name,prefix,prefix_type,rib)
+        allocated['free'] = False
+        allocated.commit()
+        return allocated
+
+    def add_prefix(self, name, prefix, prefix_type='container', rib='default'):
+        """Used to add a prefix to the IPAM.
+
+        This prefix can then be used as a pool to allocate from.
+        Adding a prefix sets its status as Free. (free=true)
+
+        Checks to see if the prefix fits inside a bigger, existing prefix
+        in the same RIB, and if so, will populate the IPAM with the remaining
+        prefixes. This means all ancestors of the added prefix will no longer
+        be free.
+        """
+        #Todo: when adding supernet above supernet, neet to populate
         prefix = IPNetwork(prefix)
+        ip = ip_to_int(prefix.network())
+        split_ip = int_128_to_32(ip)
+        version = prefix.version()
+        with db() as conn:
+            supernet, srow = self._get_supernet(conn, ip, rib, prefix._bits,
+                                                version)
+            model = netrino_prefix()
+            # This is the supernet
+            if not supernet:
+                sql = 'INSERT INTO netrino_prefix VALUES ' \
+                      '(?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                uid = str(uuid4())
+                vals = [uid]
+                vals += list(split_ip)
+                vals += ["Available",None,version,True,rib]
+                vals += [prefix._bits, prefix_type, now()]
+                conn.execute(sql, vals)
+                self._update_children(conn,None,uid,prefix._bits,prefix,rib)
+                conn.commit()
+                model.sql_id(uid)
+                return model
+            # This is not a supernet
+            # Checking if it exists already
+            sql = "SELECT id,parent FROM netrino_prefix WHERE rib=? " \
+                  "AND prefix_len=? AND version=? AND a4=?"
+            vals = [rib, prefix._bits,version,split_ip[3]]
+            if version == 6:
+                sql += " AND a1=? AND a2=? AND a3=?"
+                vals += [split_ip[0],split_ip[1],split_ip[2]]
+            exist = conn.execute(sql,vals).fetchone()
+            # It exists
+            if exist:
+                conn.execute('UPDATE netrino_prefix SET type=? WHERE id=?',
+                             (prefix_type, exist['id'],))
+                self._update_children(conn, exist['parent'], exist['id'],
+                                      prefix._bits, prefix, rib)
+                conn.commit()
+                model.sql_id(exist['id'])
+                return model
+            # It does not yet exist
+            # Must reserve and create.
+            parent, prow = self._closest_above_prefix(conn, srow, prefix, rib)
+            self._reserve(conn,parent,prow['id'],prefix._bits,prow['parent'],
+                          version,rib,prefix_type,prefix)
+            # _reserve creates two prefixes of the requested length.
+            # One has free=false, other has free=true. Since we are adding
+            # a prefix, it has to remain free.
+            sql = "UPDATE netrino_prefix SET free=?,type=? " \
+                  "WHERE rib=? AND prefix_len=? AND version=? AND a4=?"
+            if version == 6:
+                sql += " AND a1=? AND a2=? AND a3=?"
+            conn.execute(sql, [True, prefix_type] + vals)
+            sql = "SELECT id FROM netrino_prefix WHERE " \
+                  "rib=? AND prefix_len=? AND version=? " \
+                  "AND a4=?"
+            if version == 6:
+                sql += " AND a1=? AND a2=? AND a3=?"
+            uid = conn.execute(sql,vals).fetchone()
+            uid = uid['id']
+            conn.commit()
+            model.sql_id(uid)
+            return model
+
+        return None
+
+    def add_tag(self, prefix_id, tag):
         model = netrino_prefix_tag()
-        model['prefix'] = self._id_references[prefix.prefix()]
+        model['prefix'] = prefix_id
         model['tag'] = tag
-        if tag not in self._id_tags:
-            self._id_tags[tag] = []
-        self._id_tags[tag] += [ prefix.prefix() ]
+        model.commit()
 
+    def id_tags(self, tag):
+        "Returns list of prefix ids matching tag"
+        sql = "SELECT netrino_prefix.id " \
+              "FROM netrino_prefix,netrino_prefix_tag " \
+              "WHERE tag=? " \
+              "AND netrino_prefix.id = netrino_prefix_tag.prefix"
+        with db() as conn:
+            cur = conn.execute(sql,(tag,))
+            results = cur.fetchall()
+        return [r['id'] for r in results]
 
-    def delete_prefix(self, prefix):
-        self._rtree.delete(prefix)
+    def delete_prefix(self,prefix,rib='default'):
+        """Delete's a prefix
 
-    def find(self, length, tag):
-        for prefix in self._id_tags[tag]:
-            covered = self.find_covered(prefix)
-            scan = IPIter(prefix, length)
-            for a in scan:
-                match = self.find_longer(a.prefix())
-                if match.prefix == prefix:
-                    if len(self.find_covered(a.prefix())) == 0:
-                        self.add_prefix('bleh', a.prefix())
-                        return a
-
-    def find_longer(self, ip):
-        """Find / Match on Longer.
-
-        Find will return the longest matching prefix
-        that contains the search ip (routing-style lookup).
+        Opposite of add_prefix.
+        Also deletes assignments.
+        Reverts type back to hidden.
+        Prunes IPAM as required.
         """
-        return self._rtree.search_best(ip)
+        prefix = IPNetwork(prefix)
+        ip = ip_to_int(prefix.network())
+        split_ip = int_128_to_32(ip)
+        version = prefix.version()
+        # Checking if it actually exists
+        sql = "SELECT * FROM netrino_prefix WHERE rib=? " \
+              "AND prefix_len=? AND version=? AND a4=?"
+        vals = [rib, prefix._bits, version, split_ip[3]]
+        if version == 6:
+            sql += " AND a1=? AND a2=? AND a3=?"
+            vals += [split_ip[0], split_ip[1], split_ip[2]]
+        with db() as conn:
+            exist = conn.execute(sql, vals).fetchone()
+            # It doesn't exist:
+            if not exist:
+                log.info("Received request to delete prefix '%s' in rib '%s', "
+                         "but it was not found" % (prefix, rib,))
+                return
 
-    def find_exact(self, ip):
-        """Find / Match exact Prefix.
+            sql_update = "UPDATE netrino_prefix SET type='hidden' " \
+                         "WHERE id=?"
+            conn.execute(sql_update, exist['id'])
+            # It's descendants will be getting a new parent
+            update_kids = "UPDATE netrino_prefix SET parent=? WHERE " \
+                          "parent=?"
+            cur = conn.execute(update_kids,(exist['parent'],exist['id'],))
+            # Cleanup time
+            # If it has no chidren, it can be freed
+            if cur.rowcount == 0:
+                # If this is the supernet, we can completely remove
+                if not exist['parent']:
+                    conn.execute('DELETE FROM netrino_prefix WHERE id=?',
+                                 exist['id'])
+                    conn.commit()
+                    return True
+                # Else we set it free
+                conn.execute('UPDATE netrino_prefix SET free=? WHERE id=?',
+                             (True,exist['id'],))
+            # Either it was already free, or it is now:
+            if exist['free'] or cur.rowcount==0:
+                # Checking if this prefix's other half is also free
+                oh = other_half(prefix)
+                int_oh = ip_to_int(oh.network())
+                split_oh = int_128_to_32(int_oh)
+                vals = [rib, prefix._bits, version, split_oh[3]]
+                if version == 6:
+                    vals += [split_oh[0], split_oh[1], split_oh[2]]
+                clean = conn.execute(sql,vals).fetchone()
+                # It is free, so both can be deleted, and direct ancestor
+                # can be freed up:
+                if clean and clean['free'] and clean['type'] == "hidden":
+                    anc_ip = ip if ip < int_oh else int_oh
+                    anc_net = int_to_ip(anc_ip, version)
+                    anc_net = IPNetwork(
+                        '%s/%s' % (anc_net, prefix._bits - 1))
+                    self.prune(conn, exist['id'], clean['id'], anc_net,
+                               rib, version)
 
-        Exact search will only return prefix you have entered.
+            conn.commit()
+            return True
+
+    def has_descendants(self, prefix, rib):
+        """Checks wether prefix has any prefixes or allocations underneath
+
+        Args:
+            prefix (str): string version of IP
+            rib (str): RIB to search in
         """
-        return self._rtree.search_exact(ip)
-       
-    def find_covered(self, ip):
-        """Find Covered.
+        ip = IPNetwork(prefix)
+        net = ip_to_int(ip.network())
+        last = net + ip._size
+        gwhere, gvals = v6_where_ge(net)
+        lwhere, lvals = v6_where_le(last)
+        sql = "SELECT id FROM netrino_prefix WHERE rib=? " \
+              "AND prefix_len>? AND (%s) AND (%s) LIMIT 1" % (gwhere,lwhere,)
+        with db() as conn:
+            has = conn.execute(sql, (rib,ip._bits,)+gvals+lvals).fetchone()
+        if has:
+            return True
+        return False
 
-        Covered search will return all prefixes inside the given
-        search term, as a list (including the search term itself,
-        if present in the tree)
+    def prune(self, conn, pid1, pid2, ancestor, rib, version):
+        """Prunes the IPAM
+
+        Deletes both prefixes with id's pid1 and pid2
+        Sets their ancestor as Free
+        checks if all of the following are true:
+        * Ancestor is hidden,
+        * Ancestor's other half is hidden
+        * Ancestor's other half is free
+        And if so, repeats the process with the two ancestor ID's
+        by calling itself
         """
-        return self._rtree.search_covered(ip)
+        # First deleting both
+        conn.execute('DELETE FROM netrino_prefix WHERE id=? OR id=?',
+                     (pid1, pid2,))
+        # Grabbing ID of ancestor
+        ip = ip_to_int(ancestor.network())
+        split_ip = int_128_to_32(ip)
+        sql = "SELECT * FROM netrino_prefix WHERE rib=? AND version=? " \
+              "AND prefix_len=? AND a4=?"
+        vals = [rib,version,ancestor._bits,split_ip[3]]
+        if version==6:
+            sql += " AND a1=? AND a2=? AND a3=?"
+            vals += [split_ip[0],split_ip[1],split_ip[2]]
+        anc = conn.execute(sql,vals).fetchone()
+        # Setting Ancestor as free
+        sql_update = "UPDATE netrino_prefix SET free=? WHERE id=?"
+        conn.execute(sql_update,(True,anc['id'],))
+        # Checking if it was hidden
+        if anc['type'] == 'hidden':
+            # Checking if other half is free and hidden
+            oh = other_half(ancestor)
+            int_oh = ip_to_int(oh.network())
+            split_oh = int_128_to_32(int_oh)
+            vals = [rib, version, ancestor._bits, split_oh[3]]
+            if version == 6:
+                vals += [split_oh[0], split_oh[1], split_oh[2]]
+            cleanup = conn.execute(sql, vals).fetchone()
+            # It is free, so both can be deleted, and direct ancestor can
+            # be freed up
+            if cleanup['free'] and cleanup['type'] == "hidden":
+                anc_ip = ip if ip < int_oh else int_oh
+                anc_net = int_to_ip(anc_ip, version)
+                anc_net = IPNetwork('%s/%s' % (anc_net, ancestor._bits - 1))
+                self.prune(conn,anc['id'],cleanup['id'],anc_net,rib,version)
 
+    def find(self, length, tag, type="Assigned"):
+        """Find free prefix of given length out of prefix ranges with
+        given tag.
 
-ipam = IPAM()
-ipam.add_prefix('test', '196.25.1.0/20')
-ipam.add_tag('196.25.1.0/20', 'test_tag')
-for a in range(2000):
-    print(ipam.find(32, 'test_tag'))
+        Searches for next available, and if found, for that prefix
+        sets free=False.
 
-#print(ipam.find_covered('0/0'))
+        If not found, prefix of requested size is created (if possible).
+        """
+        prefix_ids = self.id_tags(tag)
+        with db() as conn:
+            p = self._closest_free_in_prefix(conn,prefix_ids,length)
+            if p:
+                sql = "SELECT id,a1,a2,a3,a4,version FROM netrino_prefix WHERE " \
+                      "free AND prefix_len=? AND parent=?"
+                parent = int_32_to_128(p['a1'],p['a2'],p['a3'],p['a4'])
+                parent_ip = int_to_ip(parent,p['version'])
+                parent_net = IPNetwork('%s/%s' % (parent_ip,p['prefix_len'],))
+                cur = conn.execute(sql,(length,p['parent']))
+                c = cur.fetchone()
+                if c is not None:
+                    sql_reserve = "UPDATE netrino_prefix SET free=?,type=? " \
+                                  "WHERE id=?"
+                    conn.execute(sql_reserve, (False, type, c['id'],))
+                    conn.commit()
+                    int_ip = int_32_to_128(c['a1'], c['a2'], c['a3'], c['a4'])
+                    return int_to_ip(int_ip,c['version']) + '/' + str(length)
+            # Boo - we did not find a free block of requested size.
+            # Lets create one and return that.
+                reserved = self._reserve(conn, parent_net, p['id'], length, p['parent'],
+                                         p['version'], p['rib'],type)
+                if reserved:
+                    conn.commit()
+                    return reserved.prefix()
+
+        raise NotFoundError("Unable to allocate address from pool '%s'" % tag)
+
+    def get_prefix(self, ip, rib):
+        """Returns prefix model
+
+        Returns None if not found
+        """
+        int_ip = ip_to_int(ip.network())
+        split_ip = int_128_to_32(int_ip)
+        sql = "SELECT id FROM netrino_prefix WHERE prefix_len=? AND " \
+              "version=? AND rib=? AND a4=?"
+        vals = [ip._bits, ip.version(), rib, split_ip[3]]
+        if ip.version() == 6:
+            sql += " AND a1=? AND a2=? AND a3=?"
+            vals += [split_ip[0], split_ip[1], split_ip[2]]
+        with db() as conn:
+            cur = conn.execute(sql, vals)
+            result = cur.fetchone()
+            if result:
+                prefix = netrino_prefix()
+                prefix.sql_id(result['id'])
+                return prefix
+        return None
+
+    def release_prefix(self, prefix, rib="default"):
+        """The opposite of allocate_prefix.
+
+        So in essecence will set free=True, but will also set type to
+        "hidden". And Prune if required.
+
+        Args:
+            prefix (str): IP prefix to be released
+            rib (str): RIB to release from
+        """
+        # First verifying that it exists
+        ip = self.get_prefix(IPNetwork(prefix),rib)
+        err_msg = "Received request to release prefix '%s' in rib '%s', " % (
+                   prefix, rib,)
+        if not ip or ip['free']:
+            log.info(err_msg + "but no such allocation was not found" )
+            return
+
+        #If this is really an assignment, it won't have any children
+        if self.has_descendants(prefix,rib):
+            raise ValidationError(err_msg + "but it has sub-assigments")
+
+        #It is in use (free=false) so valid candidate for deletion
+        if ip['type'] != "hidden":
+            # This is really an allocation.
+            ip['free'] = True
+            # Can use delete_prefix() to remove/prune, but it will only delete
+            # "hidden", so we need to set it that way first
+            ip['type'] = 'hidden'
+            ip.commit()
+            return self.delete_prefix(prefix, rib)
+

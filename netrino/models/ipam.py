@@ -35,18 +35,27 @@ from luxon.utils.timezone import now
 
 @register.model()
 class netrino_prefix(SQLModel):
-    id = SQLModel.Uuid(default=uuid4, internal=True)
+    id = SQLModel.Uuid(internal=True, default=uuid4)
+    a1 = SQLModel.BigInt()
+    a2 = SQLModel.BigInt()
+    a3 = SQLModel.BigInt()
+    a4 = SQLModel.BigInt(null=False)
     name = SQLModel.Text(null=False)
-    prefix = SQLModel.String(null=False)
+    parent = SQLModel.Uuid()
     version = SQLModel.Integer(default=4)
+    free = SQLModel.Boolean()
+    rib = SQLModel.String()
+    prefix_len = SQLModel.Integer()
+    type = SQLModel.String(null=True)
     creation_time = SQLModel.DateTime(default=now, readonly=True)
+    prefix_indices = SQLModel.Index(name,a1,a2,a3,a4,prefix_len,rib,type)
     primary_key = id
 
 
 @register.model()
 class netrino_prefix_tag(SQLModel):
     id = SQLModel.Uuid(default=uuid4, internal=True)
-    prefix = SQLModel.Uuid()
+    prefix = SQLModel.String()
     tag = SQLModel.Text(null=False)
     creation_time = SQLModel.DateTime(default=now, readonly=True)
     unique_prefix_tag = SQLModel.UniqueIndex(prefix, tag)
