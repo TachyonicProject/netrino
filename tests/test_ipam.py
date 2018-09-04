@@ -39,7 +39,7 @@ def test_add_supernet():
 
 def test_find_initial():
     prefix_len = 24
-    result = ipam.find(prefix_len,'test_tag')
+    result = ipam.find(prefix_len,'test_tag','first-24')
     assert result == '196.25.0.0/24'
     prefix = IPNetwork(result)
     ip = ip_to_int('196.25.0.0')
@@ -52,7 +52,7 @@ def test_find_initial():
 
 def test_find_second():
     prefix_len = 24
-    result = ipam.find(prefix_len,'test_tag')
+    result = ipam.find(prefix_len,'test_tag','second-24')
     assert result == '196.25.1.0/24'
     prefix = IPNetwork(result)
     ip = ip_to_int('196.25.1.0')
@@ -107,12 +107,16 @@ def test_add_prefix_above_supernet():
         existed = conn.execute(sql, sup['id']).fetchone()
     assert existed['parent'] == very_top['id']
     assert existed['id'] == empty_child['parent']
+    with db() as conn:
+        sql = "SELECT * FROM netrino_prefix WHERE a4=?"
+        sup_oh = conn.execute(sql, 3289976832).fetchone()
+    assert sup_oh['free'] == True
 
 
 def test_allocate_from_empty_child_prefix():
     global pl30
     prefix_len = 30
-    alloc_30 = ipam.find(prefix_len,'child_with_no_children')
+    alloc_30 = ipam.find(prefix_len,'child_with_no_children', 'a-/30')
     assert alloc_30 == '196.25.2.0/30'
     with db() as conn:
         sql = "SELECT id,parent FROM netrino_prefix " \
@@ -125,7 +129,7 @@ def test_allocate_from_empty_child_prefix():
 def test_allocate_from_fully_populated_block():
     prefix_len = 30
     with pytest.raises(NotFoundError) as nfinfo:
-        ipam.find(prefix_len, 'child_prefix_with_children')
+        ipam.find(prefix_len, 'child_prefix_with_children',"shouldn't exist")
     assert "Unable to allocate address from pool 'child_prefix_with_children'" in str(
         nfinfo.value)
 
@@ -244,7 +248,7 @@ import time
 def test_speed():
     start = time.time()
     for i in range(2000):
-        ipam.find(32,'test_tag')
+        ipam.find(32,'test_tag','lo%s' % i)
     end = time.time()
     duration = end-start
     assert duration<10
@@ -252,4 +256,5 @@ def test_speed():
         count = conn.execute("SELECT count(id) AS n FROM netrino_prefix "
                             "WHERE prefix_len=32").fetchone()
         assert count['n'] >= 2000
+
 
