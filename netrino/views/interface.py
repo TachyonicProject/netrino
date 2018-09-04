@@ -40,12 +40,21 @@ METHODS = ('GET','POST','PUT','DELETE','PATCH',
 @register.resources()
 class Interface():
     def __init__(self):
+        router.add('GET','/v1/interfaces', self.list, tag='services')
         router.add(METHODS,
                    '/v1/interface/{id}/{interface}/{property}',
                    self.interface, tag='services')
         router.add(METHODS,
                    '/v1/interface/{id}/{interface}/{property}/{method}',
                    self.property, tag='services')
+
+    def list(self, req, resp):
+        """Lists all the registered netrino_interfaces Entrypoints.
+        """
+        interfaces = []
+        for e in EntryPoints('netrino_interfaces'):
+            interfaces.append(e)
+        return interfaces
 
     def interface(self, req, resp, id, interface, property):
         """ Interact with element via given interface and method.
