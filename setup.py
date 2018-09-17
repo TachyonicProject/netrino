@@ -296,7 +296,8 @@ setup_dict = dict(
             'contrail = netrino.interfaces.contrail.element:Element'
         ],
         'netrino_mappers': [
-            'infinitystone_domain = netrino.mappers:domain_from_context'
+            'infinitystone_domain = netrino.mappers:domain_from_context',
+            'infinitystone_tenant = netrino.mappers:tenant_from_context'
         ],
         'netrino_resources': [
             'element = netrino.resources.element.element:Element',

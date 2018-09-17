@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Frans Rademan, David Kruger.
+# Copyright (c) 2018 Dave Kruger.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,37 +27,29 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-from uuid import uuid4
-
-from luxon import register
-from luxon import SQLModel
-from luxon.utils.timezone import now
-
-@register.model()
-class netrino_prefix(SQLModel):
-    id = SQLModel.Uuid(internal=True, default=uuid4)
-    a1 = SQLModel.BigInt()
-    a2 = SQLModel.BigInt()
-    a3 = SQLModel.BigInt()
-    a4 = SQLModel.BigInt(null=False)
-    name = SQLModel.Text(null=False)
-    parent = SQLModel.Uuid()
-    version = SQLModel.Integer(default=4)
-    free = SQLModel.Boolean()
-    rib = SQLModel.String()
-    prefix_len = SQLModel.Integer()
-    type = SQLModel.String(null=True)
-    creation_time = SQLModel.DateTime(default=now, readonly=True)
-    prefix_indices = SQLModel.Index(name,a1,a2,a3,a4,prefix_len,rib,type)
-    primary_key = id
 
 
-@register.model()
-class netrino_prefix_tag(SQLModel):
-    id = SQLModel.Uuid(default=uuid4, internal=True)
-    prefix = SQLModel.String()
-    tag = SQLModel.Text(null=False)
-    creation_time = SQLModel.DateTime(default=now, readonly=True)
-    unique_prefix_tag = SQLModel.UniqueIndex(prefix, tag)
-    prefix_tag_prefix_ref = SQLModel.ForeignKey(prefix, netrino_prefix.id)
-    primary_key = id
+def separate_entries(d, keys=[]):
+    """Removes certain keys from a dict, and returns them in in a separate list
+
+    Usage:
+        removed, left = separate_entries({"foo1": "bar1", "foo2": "bar2"}, ["foo2"])
+        will return:
+        removed = {"foo2": "bar2"}
+        left = {"foo1": "bar1"}
+
+    Args:
+     d (dict): Dictionary to strip from.
+     keys (list): List of keys to be returned in a separate list.
+
+    Returns:
+        tuple containing two dicts.
+    """
+    removed = {}
+    for k in keys:
+        try:
+            removed[k]= d[k]
+            del d[k]
+        except KeyError:
+            pass
+    return removed, d
