@@ -31,12 +31,14 @@ import re
 
 JSP_RE = '[^\[]+(?=\])|[^\.\[\]]+'
 
+
 def intIfInt(s):
     """Returns Int version of s if possible, else s"""
     try:
         return int(s)
     except ValueError:
         return s
+
 
 def recurse_set(p, o, val=None):
     """Creates the key/entries of json path list 'p' in obj 'o'.
@@ -57,9 +59,9 @@ def recurse_set(p, o, val=None):
         init = val
     else:
         if isinstance(p[1], str):
-           init = {}
+            init = {}
         elif isinstance(p[1], int):
-           init = []
+            init = []
     if isinstance(o, dict):
         o.setdefault(p[0], init)
     elif isinstance(o, list):
