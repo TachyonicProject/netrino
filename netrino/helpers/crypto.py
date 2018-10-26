@@ -27,6 +27,8 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
+import os
+
 from luxon import g
 from luxon.utils.singleton import Singleton
 from luxon.utils.crypto import Crypto as CryptoLuxon
@@ -38,7 +40,13 @@ class Crypto(CryptoLuxon, metaclass=Singleton):
     """
     def __init__(self):
         super().__init__()
-        with open(g.app.path.rstrip('/') + '/credentials.key', 'rb') as key_file:
+        key_loc = g.app.path.rstrip('/') + '/credentials.key'
+        if not os.path.isfile(key_loc):
+            key = self.generate_key()
+            iv = self.generate_iv()
+            with open(key_loc,'wb') as key_file:
+                key_file.write(key+iv)
+        with open(key_loc, 'rb') as key_file:
             key_str = key_file.read()
             key = key_str[0:32]
             iv = key_str[32:48] 

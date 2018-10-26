@@ -35,6 +35,7 @@ from psychokinetic import Openstack
 from psychokinetic import Contrail
 
 from luxon.exceptions import FieldMissing
+from luxon import g
 
 
 class Interface(BaseInterface):
@@ -74,7 +75,7 @@ class Interface(BaseInterface):
     def __enter__(self):
         self.contrail.authenticate(self.metadata['username'],
                                    self.metadata['password'],
-                                   self.metadata['domain'])
+                                   g.current_request.context_domain)
         return self
 
     def __exit__(self, *args, **kwargs):

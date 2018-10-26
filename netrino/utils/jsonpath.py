@@ -28,8 +28,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
 import re
+from luxon import g
 
-JSP_RE = '[^\[]+(?=\])|[^\.\[\]]+'
+JSP_RE = '[^\[]+(?=\])|[^\.\[\]\$]+'
 
 
 def intIfInt(s):
@@ -45,8 +46,6 @@ def recurse_set(p, o, val=None):
 
     Sets value of path 'p' in obj 'o' to 'val' if specified, else None.
 
-    Leaves value unchanged if exists already.
-
     Args:
         p (list): json path in list format. Strings are dict keys, and int's
                   are list indexes
@@ -59,27 +58,46 @@ def recurse_set(p, o, val=None):
         init = val
     else:
         if isinstance(p[1], str):
-            init = {}
+            if isinstance(o, list):
+                init = o[p[0]] if len(o) >= p[0]+1 and o[p[0]] else {}
+            elif isinstance(o,dict):
+                init = o.get(p[0],{})
+                # if o[p[0]] is None, we need to override
+                init = {} if not init else init
         elif isinstance(p[1], int):
-            init = []
+            if isinstance(o, list):
+                if len(o) >= p[0] + 1:
+                    init=o[p[0]]
+                else:
+                    init = []
+            elif isinstance(o,dict):
+                init = o.get(p[0],[])
+
     if isinstance(o, dict):
         o.setdefault(p[0], init)
+        # Want to override instead or preserve if we are at the end
+        # of our path
+        if len(p) == 1:
+            o[p[0]] = init
+
     elif isinstance(o, list):
         for _ in range(len(o), p[0]):
             o.append(None)
-        o.append(init)
+        if len(o) >= p[0] + 1:
+            o[p[0]] = init
+        else:
+            o.append(init)
+
     recurse_set(p[1:], o[p[0]], val)
 
 
-def set_if_not_exist(path, obj, val=None):
-    """Sets entry in obj as specified by json path 'path' equal to 'val' if
-    not yet present.
+def set_or_update(path, obj, val=None):
+    """Sets entry in obj as specified by json path 'path' equal to 'val'.
 
     Sets value to None if 'val' not specified.
-    Creates all entries required to do so.
-    Leaves value unchanged if it exists already.
+    Creates all entries required to do so (ie autovivification).
 
-    Eg. when o = {}, then set_if_not_exist('foo[1].bar',o,"baz") will update o
+    Eg. when o = {}, then set_or_update('foo[1].bar',o,"baz") will update o
     to become o = {'foo': [None, {'bar': 'baz'}}
 
     Args:
