@@ -37,7 +37,7 @@ from luxon.utils.pkg import EntryPoints
 from luxon.exceptions import NotFoundError
 from psychokinetic.utils.api import sql_list, obj
 
-from netrino.models.elements import netrino_element
+from netrino.models.elements import netrino_element, netrino_element_interface
 from netrino.helpers.crypto import Crypto
 
 
@@ -142,18 +142,16 @@ class Elements(object):
 
     def add_interface(self, req, resp, eid, interface):
         crypto = Crypto()
-        model = EntryPoints('netrino_elements')[interface]()
-        model.update(req.json)
-        with db() as conn:
-            uuid = str(uuid4())
-            conn.execute('INSERT INTO netrino_element_interface' +
-                         ' (id, element_id, interface, metadata)' +
-                         ' VALUES' +
-                         ' (%s, %s, %s, %s)',
-                         (uuid, eid, interface,
-                          crypto.encrypt(model.json)))
-            conn.commit()
-            return self.view_interface(req, resp, eid, interface)
+        metadata_model = EntryPoints('netrino_elements')[interface]()
+        metadata_model.update(req.json)
+        # Check to see all required data was submittied
+        metadata_model._pre_commit()
+        model = netrino_element_interface()
+        model['element_id'] = eid
+        model['interface'] = interface
+        model['metadata'] = crypto.encrypt(metadata_model.json)
+        model.commit()
+        return self.view_interface(req, resp, eid, interface)
 
     def view_interface(self, req, resp, eid, interface):
         crypto = Crypto()

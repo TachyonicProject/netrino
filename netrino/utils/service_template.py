@@ -53,3 +53,35 @@ def separate_entries(d, keys=[]):
         except KeyError:
             pass
     return removed, d
+
+def find_entry(entry, data):
+    """Returns the Complete Entry matching the corresponding entry number
+
+    Args:
+        entry (int): Entry number to find
+        data (list): list of models from req.json['models']
+
+    Returns:
+         dict entry mathcing the corresponding entry number.
+    """
+    for e in data:
+        if 'entry_no' in e and e['entry_no'] == entry:
+            return e
+
+def self_reference(f):
+    """Decorator to give a function the ability to reference its own attributes
+
+    Eg.:
+
+    @self_reference
+    def myFunc(foo, self=None):
+        self.newAttr = "New attribute"
+
+    Args:
+        f (function): The function object to be decorated
+
+    Returns:
+         decorated function.
+    """
+    f.__defaults__ = f.__defaults__[:-1] + (f,)
+    return f

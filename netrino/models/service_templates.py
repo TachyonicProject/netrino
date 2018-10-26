@@ -52,9 +52,6 @@ class netrino_service_template_entry(SQLModel):
     entry_no = SQLModel.Integer(null=False)
     yang_model = SQLModel.String(null=False)
     interface = SQLModel.Text(default="netconf")
-    mappings = SQLModel.MediumText(null=True)
-    user_select = SQLModel.MediumText(null=True)
-    task_output = SQLModel.MediumText(null=True)
     element = SQLModel.Uuid(null=True)
     element_tag = SQLModel.String(null=True)
     creation_time = SQLModel.DateTime(default=now, readonly=True)
@@ -62,8 +59,6 @@ class netrino_service_template_entry(SQLModel):
                                                netrino_service_template.id)
     element_ref = SQLModel.ForeignKey(element, netrino_element.id)
     element_tag_ref = SQLModel.ForeignKey(element_tag,netrino_element_tag.name)
-    # interface_ref = SQLModel.ForeignKey(interface,
-    #                                     netrino_element_interface.interface)
     unique_entry = SQLModel.UniqueIndex(service_template, entry_no)
     primary_key = id
 
@@ -84,6 +79,7 @@ class netrino_servicetemplate_mappings(SQLModel):
     id = SQLModel.Uuid(default=uuid4, internal=True)
     path = SQLModel.String(null=False)
     mapper = SQLModel.String(null=False)
+    mapper_data = SQLModel.Json()
     servicetemplate_entry = SQLModel.Uuid(null=False)
     servicetemplate_entry_ref = SQLModel.ForeignKey(servicetemplate_entry,
                                              netrino_service_template_entry.id)
@@ -94,7 +90,7 @@ class netrino_servicetemplate_mappings(SQLModel):
 class netrino_user_select(SQLModel):
     id = SQLModel.Uuid(default=uuid4, internal=True)
     path = SQLModel.String(null=False)
-    url = SQLModel.Uri(null=False)
+    url = SQLModel.String(null=False)
     servicetemplate_entry = SQLModel.Uuid(null=False)
     servicetemplate_entry_ref = SQLModel.ForeignKey(servicetemplate_entry,
                                              netrino_service_template_entry.id)
@@ -119,6 +115,22 @@ class netrino_servicetemplate_static(SQLModel):
     path = SQLModel.String(null=False)
     value = SQLModel.String(null=False)
     type = SQLModel.String(default="str")
+    servicetemplate_entry = SQLModel.Uuid(null=False)
+    servicetemplate_entry_ref = SQLModel.ForeignKey(servicetemplate_entry,
+                                             netrino_service_template_entry.id)
+    servicetemplate_entry_index = SQLModel.Index(servicetemplate_entry)
+    primary_key = id
+
+@register.model()
+class netrino_servicetemplate_copy(SQLModel):
+    """Used when a copy of an already entered/generated value is to be used.
+
+    When entry_no is ommitted, THIS entry is assumed.
+    """
+    id = SQLModel.Uuid(default=uuid4, internal=True)
+    path = SQLModel.String(null=False)
+    source_path = SQLModel.String(null=False)
+    entry_no = SQLModel.Integer()
     servicetemplate_entry = SQLModel.Uuid(null=False)
     servicetemplate_entry_ref = SQLModel.ForeignKey(servicetemplate_entry,
                                              netrino_service_template_entry.id)

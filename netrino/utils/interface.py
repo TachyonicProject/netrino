@@ -32,6 +32,8 @@ import json
 from luxon import db
 from luxon.exceptions import FieldMissing
 
+from netrino.helpers.crypto import Crypto
+
 
 def get_element_metadata(uuid, interface):
     """Finds element login metadata for a given uuid.
@@ -45,11 +47,13 @@ def get_element_metadata(uuid, interface):
     """
     with db() as cur:
         sql = 'SELECT metadata FROM netrino_element_interface WHERE ' \
-              'id=? AND interface=?'
+              'element_id=? AND interface=?'
         result = cur.execute(sql, (uuid, interface))
         result = result.fetchone()
     if result:
-        return json.loads(result['metadata'])
+        crypto = Crypto()
+        plaintext = crypto.decrypt(result['metadata'])
+        return json.loads(plaintext)
     return None
 
 def getScope(req, infinitystone=[], one_of=[], all_of=[]):

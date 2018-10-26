@@ -64,5 +64,7 @@ class netrino_element_tag(SQLModel):
     name = SQLModel.Text(null=False)
     element_id = SQLModel.Uuid(null=False)
     element_ref = SQLModel.ForeignKey(element_id, netrino_element.id)
-    unique_element_tag = SQLModel.UniqueIndex(element_id, name)
+    # Need the following in order to be able to insert tag=NULL in
+    # service_template_entry
+    unique_element_tag = SQLModel.UniqueIndex(name)
     primary_key = id
