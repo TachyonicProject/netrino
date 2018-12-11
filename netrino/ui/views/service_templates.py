@@ -211,9 +211,6 @@ class Users():
             forms = {}
             for a in ALLOCATIONS:
                 forms[a + '_form'] = form(ALLOCATIONS[a])
-                from luxon import GetLogger
-                log = GetLogger(__name__)
-                log.debug("MYDEBUG: %s" % forms)
             return render_template('netrino.ui/service_templates/model.html',
                                    view='Edit Service Template Entry',
                                    form=html_form,
