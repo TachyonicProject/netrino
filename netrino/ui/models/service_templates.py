@@ -65,7 +65,7 @@ class netrino_servicetemplate_pool(Model):
     path = Model.String(null=False)
     type = Model.String(null=False)
     pool = Model.String(null=False)
-    servicetemplate_entry = Model.Uuid(null=False)
+    servicetemplate_entry = Model.Uuid(null=False, hidden=True)
 
 @register.model()
 class netrino_servicetemplate_mappings(Model):
@@ -73,14 +73,14 @@ class netrino_servicetemplate_mappings(Model):
     path = Model.String(null=False)
     mapper = Model.String(null=False)
     mapper_data = Model.Json()
-    servicetemplate_entry = Model.Uuid(null=False)
+    servicetemplate_entry = Model.Uuid(null=False, hidden=True)
 
 @register.model()
 class netrino_user_select(Model):
     id = Model.Uuid(default=uuid4, internal=True)
     path = Model.String(null=False)
     url = Model.String(null=False)
-    servicetemplate_entry = Model.Uuid(null=False)
+    servicetemplate_entry = Model.Uuid(null=False, hidden=True)
 
 @register.model()
 class netrino_task_output(Model):
@@ -88,7 +88,7 @@ class netrino_task_output(Model):
     path = Model.String(null=False)
     entry_no = Model.Integer(null=False)
     output_path = Model.String(null=False)
-    servicetemplate_entry = Model.Uuid(null=False)
+    servicetemplate_entry = Model.Uuid(null=False, hidden=True)
 
 @register.model()
 class netrino_servicetemplate_static(Model):
@@ -96,7 +96,7 @@ class netrino_servicetemplate_static(Model):
     path = Model.String(null=False)
     value = Model.String(null=False)
     type = Model.String(default="str")
-    servicetemplate_entry = Model.Uuid(null=False)
+    servicetemplate_entry = Model.Uuid(null=False, hidden=True)
 
 @register.model()
 class netrino_servicetemplate_copy(Model):
@@ -108,4 +108,4 @@ class netrino_servicetemplate_copy(Model):
     path = Model.String(null=False)
     source_path = Model.String(null=False)
     entry_no = Model.Integer()
-    servicetemplate_entry = Model.Uuid(null=False)
+    servicetemplate_entry = Model.Uuid(null=False, hidden=True)

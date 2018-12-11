@@ -87,6 +87,9 @@ class ServiceTemplate():
                    '/v1/service-template/{uid}/model/{mid}/allocations/'
                    '{atype}',
                    self.allocations, 'services:view')
+        router.add('POST',
+                   '/v1/allocation/{atype}',
+                   self.add_allocation, 'services:admin')
         router.add('GET',
                    '/v1/allocation/{atype}/{aid}',
                    self.view_allocation, 'services:view')
@@ -135,10 +138,10 @@ class ServiceTemplate():
                         alloc_model['servicetemplate_entry'] = nste['id']
                         alloc_model.update(e)
                         alloc_model.commit()
-        except (SQLIntegrityError, FieldError, FieldMissing) as err:
+        except (SQLIntegrityError, FieldError, FieldMissing):
             service_template.delete()
             service_template.commit()
-            raise err
+            raise
 
         return self.view(req, resp, name)
 
@@ -354,7 +357,7 @@ class ServiceTemplate():
         entry.commit()
 
     def allocations(self, req, resp, uid, mid, atype=None):
-        """Provides a list of all the auto-allocation settings for a YANG
+        """Provides the auto-allocation settings for a YANG
            model entry of a Service Template.
 
         If 'atype' is not specified, all of the following categories are
@@ -381,6 +384,18 @@ class ServiceTemplate():
                 result = raw_list(req, cur.fetchall())
 
         return result
+
+    def add_allocation(self, req, resp, atype):
+        """Creates an entry for an allocation setting.
+
+            Args:
+                atype (str): The Allocation type (one of 'pool-allocations',
+                             'mappings', 'user-select', 'task-output' or
+                             'static-assignments')
+        """
+        entry = ALLOCATIONS[atype]()
+        entry.update(req.json)
+        entry.commit()
 
     def view_allocation(self, req, resp, atype, aid):
         """Returns the entry for a specific allocation setting.

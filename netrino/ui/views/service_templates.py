@@ -31,22 +31,28 @@ from luxon import g
 from luxon import router
 from luxon import register
 from luxon import render_template
+from luxon import js
 from luxon.utils.bootstrap4 import form
-from luxon.utils.html5 import select
 from luxon.exceptions import FieldMissing
+from collections import OrderedDict
 
 from netrino.ui.models.service_templates import netrino_service_template
 from netrino.ui.models.service_templates import netrino_service_template_entry
+from netrino.ui.models.service_templates import netrino_servicetemplate_mappings
+from netrino.ui.models.service_templates import netrino_servicetemplate_static
+from netrino.ui.models.service_templates import netrino_servicetemplate_pool
+from netrino.ui.models.service_templates import netrino_servicetemplate_copy
+from netrino.ui.models.service_templates import netrino_user_select
+from netrino.ui.models.service_templates import netrino_task_output
 
-
-def render_model(stid, model, view, data=None, ro=False):
-    html_form = ""
-    return render_template('netrino.ui/service_templates/model.html',
-                           view='%s %s Interface' % (view, interface,),
-                           form=html_form,
-                           id=eid,
-                           interface=interface)
-
+ALLOCATIONS = OrderedDict(
+    {'static_assignments': netrino_servicetemplate_static,
+    'pool_allocations': netrino_servicetemplate_pool,
+    'mappings': netrino_servicetemplate_mappings,
+    'user_select':netrino_user_select,
+    'task_output': netrino_task_output,
+    'copy_entries': netrino_servicetemplate_copy}
+)
 
 g.nav_menu.add('/Services/Templates',
                href='/services/templates',
@@ -99,6 +105,15 @@ class Users():
 
         router.add('GET', '/services/templates/{id}/rm_model/{model_id}',
                    self.rm_model,
+                   tag='services:admin')
+
+        router.add('POST',
+                   '/services/templates/{id}/allocate/{model_id}/{atype}',
+                   self.add_allocation,
+                   tag='services:admin')
+
+        router.add('GET', '/services/templates/allocate/{atype}/{aid}',
+                   self.rm_allocation,
                    tag='services:admin')
 
     def list(self, req, resp):
@@ -162,15 +177,6 @@ class Users():
         uri = '/v1/service-template/%s/model' % id
         response = req.context.api.execute('POST', uri, data=data,
                                            endpoint='orchestration')
-        # return render_model(id, model, view="Add")
-        # element_interface = EntryPoints('netrino_elements')[interface]
-        # html_form = form(element_interface)
-        #
-        # return render_template('infinitystone.ui/elements/interface.html',
-        #                        view='Add %s Interface' % interface,
-        #                        form=html_form,
-        #                        id=id,
-        #                        interface=interface)
 
     def view_model(self, req, resp, id, model_id):
         uri = '/v1/service-template/%s/model/%s' % (id, model_id,)
@@ -202,6 +208,12 @@ class Users():
                                               endpoint='orchestration')
             model_name = service.json['yang_model']
             html_form = form(netrino_service_template_entry, service.json)
+            forms = {}
+            for a in ALLOCATIONS:
+                forms[a + '_form'] = form(ALLOCATIONS[a])
+                from luxon import GetLogger
+                log = GetLogger(__name__)
+                log.debug("MYDEBUG: %s" % forms)
             return render_template('netrino.ui/service_templates/model.html',
                                    view='Edit Service Template Entry',
                                    form=html_form,
@@ -210,10 +222,28 @@ class Users():
                                    model_name=model_name,
                                    interface=service.json['interface'],
                                    element_id=service.json['element'],
-                                   element_name=service.json['element_name'])
+                                   element_name=service.json['element_name'],
+                                   **forms)
 
     def rm_model(self, req, resp, id, model_id):
         uri = '/v1/service-template/%s/model/%s' % (id, model_id,)
-        response = req.context.api.execute('DELETE', uri,
-                                           endpoint='orchestration')
+        req.context.api.execute('DELETE', uri,
+                                endpoint='orchestration')
+
+    def add_allocation(self, req, resp, id, model_id, atype):
+        data = req.form_dict
+        data['servicetemplate_entry'] = model_id
+        if 'mapper_data' in data:
+            data['mapper_data'] = js.loads(data['mapper_data'])
+        req.context.api.execute('POST', 'v1/allocation/' + atype,
+                                data=data,
+                                endpoint='orchestration')
+        req.method = 'GET'
+        return self.edit_model(req,resp, id, model_id)
+
+
+    def rm_allocation(self, req, resp, atype, aid):
+        req.context.api.execute('DELETE',
+                                '/v1/allocation/%s/%s' % (atype, aid,),
+                                endpoint='orchestration')
 
