@@ -1,3 +1,5 @@
 luxon
 psychokinetic
 pyipcalc
+ncclient
+jsonpath_ng

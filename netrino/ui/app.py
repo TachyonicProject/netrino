@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Frans Rademan, David Kruger.
+# Copyright (c) 2018 Dave Kruger.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,21 +27,8 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-
-"""
-These Models define the model for the metadata associated with each
-Element's Interface
-"""
-
-from uuid import uuid4
-
-from luxon import Model
-
-
-class Element(Model):
-    keystone_url = Model.String(null=False)
-    contrail_url = Model.String(null=False)
-    username = Model.String(null=False)
-    password = Model.String(null=False, password=True)
-    region = Model.String(null=True)
-    interface = Model.Enum('admin', 'public', 'internal', null=True)
+from luxon import g
+#import netrino.ui.models
+import netrino.ui.views
+from luxon import register
+register.javascript('/netrino.ui/netrino.js')

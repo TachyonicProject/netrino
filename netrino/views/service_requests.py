@@ -34,6 +34,7 @@ from luxon import router
 from luxon import db
 from luxon.utils.pkg import EntryPoints
 from luxon.exceptions import NotFoundError
+from luxon.helpers.api import sql_list
 
 from netrino.helpers.service_template import populate_req_json
 
@@ -41,30 +42,37 @@ from netrino.helpers.service_template import populate_req_json
 @register.resources()
 class SerivceRequests(object):
     def __init__(self):
+        router.add('GET', '/v1/service-requests', self.list, tag='customer')
         router.add('POST', '/v1/service-request', self.create, tag='customer')
         router.add('GET', '/v1/service-request/{srid}',
                    self.get, tag='customer')
+
+    def list(self, req, resp):
+        """Returns a list of service requests
+        """
+        return sql_list(req, 'netrino_service_request',
+                        sql_fields=('id', 'service_template',))
 
     def create(self, req, resp):
         srid = str(uuid4())
         req.json['id'] = srid
         populate_req_json()
         return req.json
-        # Todo: Run through the entries and execute them.
-        # stemplate = req.json['service_template']
-        # esql = 'SELECT * FROM netrino_service_template_entry ' \
-        #       'WHERE service_template=? ORDER BY entry_no'
-        # with db() as conn:
-        #     entries = conn.execute(esql, stemplate).fetchall()
-        # netrino_interface = EntryPoints('netrino_interfaces')
-        # for e in entries:
-        #     try:
-        #         with netrino_interface[e['interface']](e['element']) as obj:
-        #             method = getattr(obj, property)
-        #             return method(req)
-        #     except KeyError:
-        #         raise NotFoundError(
-        #             "Interface '%s' not registered" % e['interface'])
+        #Todo: Run through the entries and execute them.
+        stemplate = req.json['service_template']
+        esql = 'SELECT * FROM netrino_service_template_entry ' \
+              'WHERE service_template=? ORDER BY entry_no'
+        with db() as conn:
+            entries = conn.execute(esql, stemplate).fetchall()
+        netrino_interface = EntryPoints('netrino_interfaces')
+        for e in entries:
+            try:
+                with netrino_interface[e['interface']](e['element']) as obj:
+                    method = getattr(obj, property)
+                    return method(req)
+            except KeyError:
+                raise NotFoundError(
+                    "Interface '%s' not registered" % e['interface'])
 
     def get(self, req, resp, srid):
         # Must repond with list of task id's for each model entry

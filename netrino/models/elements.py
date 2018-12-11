@@ -36,12 +36,15 @@ from luxon.utils.timezone import now
 @register.model()
 class netrino_element(SQLModel):
     id = SQLModel.Uuid(default=uuid4, internal=True)
+    domain = SQLModel.Fqdn(internal=True)
+    tenant_id = SQLModel.Uuid(internal=True)
     parent_id = SQLModel.Uuid()
-    name = SQLModel.Text(null=False)
+    name = SQLModel.String(null=False)
     enabled = SQLModel.Boolean(default=True)
+    encrypt_metadata = SQLModel.Boolean(default=True)
     creation_time = SQLModel.DateTime(default=now, readonly=True)
     element_parent = SQLModel.ForeignKey(parent_id, id)
-    unique_element = SQLModel.UniqueIndex(name)
+    unique_element = SQLModel.UniqueIndex(name, domain, tenant_id)
     primary_key = id
 
 
@@ -49,10 +52,10 @@ class netrino_element(SQLModel):
 class netrino_element_interface(SQLModel):
     id = SQLModel.Uuid(default=uuid4, internal=True)
     element_id = SQLModel.Uuid(null=False)
-    interface = SQLModel.Text(null=False)
+    interface = SQLModel.String(null=False)
     metadata = SQLModel.LongText()
     creation_time = SQLModel.DateTime(default=now, readonly=True)
-    element_ref = SQLModel.ForeignKey(element_id, netrino_element.id)
+    element_int_ref = SQLModel.ForeignKey(element_id, netrino_element.id)
     unique_element_interface = SQLModel.UniqueIndex(element_id, interface)
     element_driver = SQLModel.Index(element_id, interface)
     primary_key = id
@@ -61,10 +64,10 @@ class netrino_element_interface(SQLModel):
 @register.model()
 class netrino_element_tag(SQLModel):
     id = SQLModel.Uuid(default=uuid4, internal=True)
-    name = SQLModel.Text(null=False)
+    name = SQLModel.String(null=False)
     element_id = SQLModel.Uuid(null=False)
-    element_ref = SQLModel.ForeignKey(element_id, netrino_element.id)
+    element_tag_ref = SQLModel.ForeignKey(element_id, netrino_element.id)
     # Need the following in order to be able to insert tag=NULL in
-    # service_template_entry
+    # netrino's service_template_entry
     unique_element_tag = SQLModel.UniqueIndex(name)
     primary_key = id

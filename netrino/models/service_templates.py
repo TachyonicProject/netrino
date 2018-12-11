@@ -33,9 +33,8 @@ from luxon import register
 from luxon import SQLModel
 from luxon.utils.timezone import now
 
-from netrino.models.elements import netrino_element
-from netrino.models.elements import netrino_element_tag
-#from netrino.models.elements import netrino_element_interface
+# from infinitystone.models.elements import infinitystone_element
+# from infinitystone.models.elements import infinitystone_element_tag
 
 @register.model()
 class netrino_service_template(SQLModel):
@@ -52,13 +51,15 @@ class netrino_service_template_entry(SQLModel):
     entry_no = SQLModel.Integer(null=False)
     yang_model = SQLModel.String(null=False)
     interface = SQLModel.Text(default="netconf")
+    function = SQLModel.Text(default="config")
+    method = SQLModel.Text()
     element = SQLModel.Uuid(null=True)
     element_tag = SQLModel.String(null=True)
     creation_time = SQLModel.DateTime(default=now, readonly=True)
     service_template_ref = SQLModel.ForeignKey(service_template,
                                                netrino_service_template.id)
-    element_ref = SQLModel.ForeignKey(element, netrino_element.id)
-    element_tag_ref = SQLModel.ForeignKey(element_tag,netrino_element_tag.name)
+    # element_ref = SQLModel.ForeignKey(element, infinitystone_element.id)
+    # element_tag_ref = SQLModel.ForeignKey(element_tag,infinitystone_element_tag.name)
     unique_entry = SQLModel.UniqueIndex(service_template, entry_no)
     primary_key = id
 
