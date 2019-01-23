@@ -1,0 +1,152 @@
+{% extends "photonic/view.html" %}
+
+{% block content %}
+    <form id="edit_entry" autocomplete="off" method='post' enctype="multipart/form-data">
+        {{ form }}
+    </form>
+    <hr>
+    <label>Static Assignments</label>
+    <hr>
+    <table class="display" data-url="v1/service-template/{{ id }}/model/{{ model }}/allocations/static_assignments" width="100%" data-endpoint="orchestration">
+        <thead>
+            <th id='path'>Path</th>
+            <th id='type'>Type</th>
+            <th id='value'>Value</th>
+            {% if 'edit' in view.lower() %}
+            <th data-confirm="Delete Entry?" data-href="/services/templates/allocate/static_assignments" data-close width="2rem">
+                <span data-feather="minus-square"></span>
+            </th>
+            {% endif %}
+        </thead>
+    </table>
+    {% if 'edit' in view.lower() %}
+    <form id='static_assign' autocomplete="off" data-msg="Succesfully Added Static Assignment" action="{{ APP }}/services/templates/{{id}}/allocate/{{model}}/static_assignments" enctype="multipart/form-data">
+        {{  static_assignments_form }}
+        <input class="btn btn-success" type="submit" value="Add Static Entry">
+    </form>
+    {% endif %}
+    <hr>
+    <label>Pool Allocations</label>
+    <hr>
+    <table class="display" data-url="v1/service-template/{{ id }}/model/{{ model }}/allocations/pool_allocations" width="100%" data-endpoint="orchestration">
+        <thead>
+            <th id='path'>Path</th>
+            <th id='type'>Type</th>
+            <th id='pool'>Pool</th>
+            {% if 'edit' in view.lower() %}
+            <th data-confirm="Delete Entry?" data-href="/services/templates/allocate/pool_allocations" data-close width="2rem">
+                <span data-feather="minus-square"></span>
+            </th>
+            {% endif %}
+        </thead>
+    </table>
+    {% if 'edit' in view.lower() %}
+    <form id='pool_assign' autocomplete="off" data-msg="Succesfully Added Pool Assignment" action="{{ APP }}/services/templates/{{id}}/allocate/{{model}}/pool_allocations" enctype="multipart/form-data">
+        {{  pool_allocations_form }}
+        <input class="btn btn-success" type="submit" value="Add Pool Entry">
+    </form>
+    {% endif %}
+    <hr>
+    <label>Mappings</label>
+    <hr>
+    <table class="display" data-url="v1/service-template/{{ id }}/model/{{ model }}/allocations/mappings" width="100%" data-endpoint="orchestration">
+        <thead>
+            <th id='path'>Path</th>
+            <th id='mapper'>Mapper</th>
+            {% if 'edit' in view.lower() %}
+            <th data-confirm="Delete Entry?" data-href="/services/templates/allocate/mappings" data-close width="2rem">
+                <span data-feather="minus-square"></span>
+            </th>
+            {% endif %}
+        </thead>
+    </table>
+    {% if 'edit' in view.lower() %}
+    <form id='pool_assign' autocomplete="off" data-msg="Succesfully Added Mapper Function" action="{{ APP }}/services/templates/{{id}}/allocate/{{model}}/mappings" enctype="multipart/form-data">
+        {{  mappings_form }}
+        <input class="btn btn-success" type="submit" value="Add Mapping Entry">
+    </form>
+    {% endif %}
+    <hr>
+    <label>Copy Entries</label>
+    <hr>
+    <table class="display" data-url="v1/service-template/{{ id }}/model/{{ model }}/allocations/copy_entries" width="100%" data-endpoint="orchestration">
+        <thead>
+            <th id='path'>Path</th>
+            <th id='source_path'>Source Path</th>
+            {% if 'edit' in view.lower() %}
+            <th data-confirm="Delete Entry?" data-href="/services/templates/allocate/copy_entries" data-close width="2rem">
+                <span data-feather="minus-square"></span>
+            </th>
+            {% endif %}
+        </thead>
+    </table>
+    {% if 'edit' in view.lower() %}
+    <form id='pool_assign' autocomplete="off" data-msg="Succesfully Added Copy Entry" action="{{ APP }}/services/templates/{{id}}/allocate/{{model}}/copy_entries" enctype="multipart/form-data">
+        {{  copy_entries_form }}
+        <input class="btn btn-success" type="submit" value="Add Copy Entry">
+    </form>
+    {% endif %}
+    <hr>
+    <label>Task Output</label>
+    <hr>
+    <table class="display" data-url="v1/service-template/{{ id }}/model/{{ model }}/allocations/task_output" width="100%" data-endpoint="orchestration">
+        <thead>
+            <th id='path'>Path</th>
+            <th id='output_path'>Output Path</th>
+            {% if 'edit' in view.lower() %}
+            <th data-confirm="Delete Entry?" data-href="/services/templates/allocate/task_output" data-close width="2rem">
+                <span data-feather="minus-square"></span>
+            </th>
+            {% endif %}
+        </thead>
+    </table>
+    {% if 'edit' in view.lower() %}
+    <form id='pool_assign' autocomplete="off" data-msg="Succesfully Added Task Output Entry" action="{{ APP }}/services/templates/{{id}}/allocate/{{model}}/task_output" enctype="multipart/form-data">
+        {{  task_output_form }}
+        <input class="btn btn-success" type="submit" value="Add Task Output Entry">
+    </form>
+    {% endif %}
+    <hr>
+    <label>User Select</label>
+    <hr>
+    <table class="display" data-url="v1/service-template/{{ id }}/model/{{ model }}/allocations/user_select" width="100%" data-endpoint="orchestration">
+        <thead>
+            <th id='path'>Path</th>
+            <th id='name'>Name</th>
+            <th id='url'>URL</th>
+            {% if 'edit' in view.lower() %}
+            <th data-confirm="Delete Entry?" data-href="/services/templates/allocate/user_select" data-close width="2rem">
+                <span data-feather="minus-square"></span>
+            </th>
+            {% endif %}
+        </thead>
+    </table>
+    {% if 'edit' in view.lower() %}
+    <form id='pool_assign' autocomplete="off" data-msg="Succesfully Added User Select Entry" action="{{ APP }}/services/templates/{{id}}/allocate/{{model}}/user_select" enctype="multipart/form-data">
+        {{  user_select_form }}
+        <input class="btn btn-success" type="submit" value="Add User Select Entry">
+    </form>
+    {% endif %}
+
+    {% if 'edit' in view.lower() %}
+    <script>
+        addSelect2src("{{ model_name }}", "{{ model_name }}", 'yang_model', 'v1/yang-models');
+        addSelect2src("{{ interface }}", "{{ interface }}", 'interface', 'v1/interfaces');
+        addSelect2src("{{ element_id }}", "{{ element_name }}", 'element', 'v1/elements');
+    </script>
+    {% endif %}
+{% endblock %}
+
+{% block buttons %}
+    {% if 'add' in view.lower() %}
+    <a href="{{ APP }}/services/templates/edit/{{id}}" class="btn btn-default">Cancel</a>
+    <a href="{{ APP }}/services/templates/{{id}}/edit_model/{{model}}" data-form="metadata_form" class="btn btn-primary">Edit</a>
+    {% elif 'edit' in view.lower() %}
+    <a href="{{ APP }}/services/templates/{{id}}/view_model/{{model}}" class="btn btn-default">Cancel</a>
+    <a href="{{ APP }}/services/templates/{{id}}/edit_model/{{model}}" data-form="edit_entry" class="btn btn-primary">Update</a>
+    <a href="{{ APP }}/services/templates/{{id}}/rm_model/{{model}}" class="btn btn-danger" data-close>Delete</a>
+    {% else %}
+    <a href="#" onclick="close_window();" class="btn btn-default">Cancel</a>
+    <a href="{{ APP }}/services/templates/{{id}}/edit_model/{{model}}" class="btn btn-primary">Edit</a>
+    {% endif %}
+{% endblock %}

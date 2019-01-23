@@ -32,6 +32,7 @@ from luxon import router
 from luxon import register
 from luxon import db
 
+from luxon.helpers.api import raw_list
 from luxon.utils import js
 from luxon.exceptions import FieldMissing
 from luxon.exceptions import SQLIntegrityError
@@ -43,7 +44,7 @@ from netrino.models.service_templates import netrino_service_template
 from netrino.models.service_templates import netrino_service_template_entry
 from netrino.helpers.service_template import ALLOCATIONS
 
-from psychokinetic.utils.api import sql_list
+from luxon.helpers.api import sql_list
 
 
 @register.resources()
@@ -82,6 +83,13 @@ class ServiceTemplate():
         router.add('GET',
                    '/v1/service-template/{uid}/model/{mid}/allocations',
                    self.allocations, 'services:view')
+        router.add('GET',
+                   '/v1/service-template/{uid}/model/{mid}/allocations/'
+                   '{atype}',
+                   self.allocations, 'services:view')
+        router.add('POST',
+                   '/v1/allocation/{atype}',
+                   self.add_allocation, 'services:admin')
         router.add('GET',
                    '/v1/allocation/{atype}/{aid}',
                    self.view_allocation, 'services:view')
@@ -130,10 +138,10 @@ class ServiceTemplate():
                         alloc_model['servicetemplate_entry'] = nste['id']
                         alloc_model.update(e)
                         alloc_model.commit()
-        except (SQLIntegrityError, FieldError, FieldMissing) as err:
+        except (SQLIntegrityError, FieldError, FieldMissing):
             service_template.delete()
             service_template.commit()
-            raise err
+            raise
 
         return self.view(req, resp, name)
 
@@ -208,24 +216,26 @@ class ServiceTemplate():
         service_template = netrino_service_template()
         service_template.sql_id(stemplate['id'])
         service_template.update({'name':req.json['name']})
-        models = req.json['models']
         service_template.commit()
-        for model in models:
-            nste = netrino_service_template_entry()
-            if 'id' in model:
-                nste.sql_id(model.pop('id'))
-            allocate = {k:model.pop(k) for k in ALLOCATIONS if k in model}
-            nste['service_template'] = service_template['id']
-            nste.update(model)
-            nste.commit()
-            for a in allocate:
-                for e in allocate[a]:
-                    alloc_model = ALLOCATIONS[a]()
-                    if 'id' in e:
-                        alloc_model.sql_id(e.pop('id'))
-                    alloc_model['servicetemplate_entry'] = nste['id']
-                    alloc_model.update(e)
-                    alloc_model.commit()
+        if 'models' in req.json:
+            models = req.json['models']
+
+            for model in models:
+                nste = netrino_service_template_entry()
+                if 'id' in model:
+                    nste.sql_id(model.pop('id'))
+                allocate = {k:model.pop(k) for k in ALLOCATIONS if k in model}
+                nste['service_template'] = service_template['id']
+                nste.update(model)
+                nste.commit()
+                for a in allocate:
+                    for e in allocate[a]:
+                        alloc_model = ALLOCATIONS[a]()
+                        if 'id' in e:
+                            alloc_model.sql_id(e.pop('id'))
+                        alloc_model['servicetemplate_entry'] = nste['id']
+                        alloc_model.update(e)
+                        alloc_model.commit()
 
         return self.view(req, resp, uid)
 
@@ -250,7 +260,7 @@ class ServiceTemplate():
         with db() as conn:
             cur = conn.execute("SELECT * FROM netrino_service_template_entry "
                                "WHERE service_template=?", (uid,))
-            return cur.fetchall()
+            return raw_list(req,cur.fetchall())
 
     def view_model(self, req, resp, uid, mid):
         """Returns a terse view of a specific Model Entry.
@@ -261,6 +271,21 @@ class ServiceTemplate():
         """
         entry = netrino_service_template_entry()
         entry.sql_id(mid)
+
+        entry = entry.transaction
+        # Adding element name so that Select forms can use this as
+        # 'selected' option
+        sql = 'SELECT netrino_element.name FROM netrino_element,' \
+              'netrino_service_template_entry WHERE ' \
+              'netrino_service_template_entry.id=? AND ' \
+              'netrino_element.id=netrino_service_template_entry.element'
+        with db() as conn:
+            try:
+                name = conn.execute(sql, mid).fetchone()['name']
+                entry['element_name'] = name
+            except TypeError:
+                entry['element_name'] = None
+
         return entry
 
     def create_model(self, req, resp, uid):
@@ -331,11 +356,12 @@ class ServiceTemplate():
         entry.delete()
         entry.commit()
 
-    def allocations(self, req, resp, uid, mid):
-        """Provides a list of all the auto-allocation settings for a YANG
+    def allocations(self, req, resp, uid, mid, atype=None):
+        """Provides the auto-allocation settings for a YANG
            model entry of a Service Template.
 
-        All of the following categories are returned:
+        If 'atype' is not specified, all of the following categories are
+        returned:
         'pool-allocations','mappings', 'user-select',
         'task-output', 'static-assignments'.
 
@@ -343,15 +369,33 @@ class ServiceTemplate():
             uid (str): UUID of the Service Template to which this Model
                        entry is associated.
             mid (str): UUID of the YANG model entry to be queried.
-
+            atype: (str): (Optional) Show only this allocation type. See
+                          netrino.helpers.service_template.ALLOCATIONS
         """
         result = {}
         sql = "SELECT * FROM %s WHERE servicetemplate_entry=?"
-        for a in ALLOCATIONS:
-            with db() as conn:
-                cur = conn.execute(sql % ALLOCATIONS[a].__name__, (mid,))
-                result[a] = cur.fetchall()
-        return js.dumps(result)
+        with db() as conn:
+            if not atype:
+                for a in ALLOCATIONS:
+                    cur = conn.execute(sql % ALLOCATIONS[a].__name__, (mid,))
+                    result[a] = cur.fetchall()
+            else:
+                cur = conn.execute(sql % ALLOCATIONS[atype].__name__, (mid,))
+                result = raw_list(req, cur.fetchall())
+
+        return result
+
+    def add_allocation(self, req, resp, atype):
+        """Creates an entry for an allocation setting.
+
+            Args:
+                atype (str): The Allocation type (one of 'pool-allocations',
+                             'mappings', 'user-select', 'task-output' or
+                             'static-assignments')
+        """
+        entry = ALLOCATIONS[atype]()
+        entry.update(req.json)
+        entry.commit()
 
     def view_allocation(self, req, resp, atype, aid):
         """Returns the entry for a specific allocation setting.

@@ -31,54 +31,54 @@ from uuid import uuid4
 
 from luxon import register
 from luxon import router
-from luxon import db
-from luxon.utils.pkg import EntryPoints
-from luxon.exceptions import NotFoundError
-from luxon.helpers.api import sql_list
-
-from netrino.helpers.service_template import populate_req_json
+from luxon.helpers.api import sql_list, obj
+from netrino.models.resources import netrino_custom_resource
 
 
 @register.resources()
-class SerivceRequests(object):
+class CustomResource(object):
     def __init__(self):
-        router.add('GET', '/v1/service-requests', self.list, tag='customer')
-        router.add('POST', '/v1/service-request', self.create, tag='customer')
-        router.add('GET', '/v1/service-request/{srid}',
-                   self.get, tag='customer')
+        router.add('GET', '/v1/resources/custom', self.list, tag='services')
+        router.add('POST', '/v1/resources/custom', self.create, tag='services')
+        router.add('GET', '/v1/resources/custom/{rid}',
+                   self.get, tag='services')
+        router.add(['PUT', 'PATCH'], '/v1/resources/custom/{rid}', self.update,
+                   tag='roles:admin')
+        router.add('DELETE', '/v1/resources/custom/{rid}', self.delete,
+                   tag='roles:admin')
+        router.add('GET','v1/resource/custom/{rtype}',
+                   self.list_custom,
+                   tag='services:view')
 
     def list(self, req, resp):
-        """Returns a list of service requests
+        """Returns a list of custom resources
         """
-        return sql_list(req, 'netrino_service_request',
-                        sql_fields=('id', 'service_template',))
+        return sql_list(req, 'netrino_custom_resource',
+                        sql_fields=('id', 'type', 'name', 'value'))
 
     def create(self, req, resp):
-        srid = str(uuid4())
-        req.json['id'] = srid
-        populate_req_json()
-        return req.json
-        #Todo: Run through the entries and execute them.
-        stemplate = req.json['service_template']
-        esql = 'SELECT * FROM netrino_service_template_entry ' \
-              'WHERE service_template=? ORDER BY entry_no'
-        with db() as conn:
-            entries = conn.execute(esql, stemplate).fetchall()
-        netrino_interface = EntryPoints('netrino_interfaces')
-        for e in entries:
-            try:
-                with netrino_interface[e['interface']](e['element']) as obj:
-                    method = getattr(obj, property)
-                    return method(req)
-            except KeyError:
-                raise NotFoundError(
-                    "Interface '%s' not registered" % e['interface'])
+        resource = obj(req, netrino_custom_resource)
+        resource.commit()
+        return resource
 
-    def get(self, req, resp, srid):
-        # Must repond with list of task id's for each model entry
-        result= {"tasks": {}}
-        result['tasks'][2] = {"result": {"virtual-network": {'uuid':"fake-uuid"}}}
-        return result
+    def get(self, req, resp, rid):
+        return obj(req, netrino_custom_resource, sql_id=rid)
+
+    def update(self, req, resp, rid):
+        resource = obj(req, netrino_custom_resource, sql_id=rid)
+        resource.commit()
+        return resource
+
+    def delete(self, req, resp, rid):
+        resource = obj(req, netrino_custom_resource, sql_id=rid)
+        resource.commit()
+        return resource
+
+    def list_custom(self, req, resp, rtype):
+        """Returns a list of custom resources of a specific type
+        """
+        return sql_list(req, 'netrino_custom_resource', type=rtype, 
+                        sql_fields=('id', 'type', 'name', 'value'))
 
 
 

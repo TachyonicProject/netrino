@@ -1,0 +1,18 @@
+{% extends "photonic/view.html" %}
+{% block content %}
+<table class="display" data-endpoint='orchestration' data-url="/v1/resources/custom" width="100%">
+    <thead>
+        <tr>
+            <th id='type'>Type</th>
+            <th id='name'>Name</th>
+            <th id='value'>Value</th>
+            <th data-href="/resources/custom" data-modal width="2rem">
+                <span data-feather="edit"></span>
+            </th>
+        </tr>
+    </thead>
+</table>
+{% endblock %}
+{% block buttons %}
+<a class="btn btn-primary" data-modal href="{{APP}}/resources/custom/add">Add Custom Resource</a>
+{% endblock %}

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Frans Rademan, David Kruger.
+# Copyright (c) 2018 David Kruger.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,13 +27,25 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-from luxon import Model
+from luxon import router
+from luxon import register
+from luxon.helpers.api import raw_list
+
+from luxon.exceptions import NotFoundError
 
 
-class Element(Model):
-    host = Model.String(null=False)
-    username = Model.String(null=False)
-    password = Model.String(null=True, password=True)
-    port = Model.Integer(null=True)
-    timeout = Model.Integer(null=True)
-    private_key = Model.Text(null=True)
+
+
+@register.resources()
+class YANGModels():
+    def __init__(self):
+        router.add('GET','/v1/yang-models', self.list, tag='services')
+
+    def list(self, req, resp):
+        """Eventually we need to provide a list of YANG models
+        available in the object store. For now simply returning hard coded
+        value until object store is ready.
+        """
+        models = ['contrail-virtual-network', 'contrail-physical-router',
+                  'contrail-service-instance']
+        return raw_list(req, models)

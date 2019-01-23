@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Frans Rademan, David Kruger.
+# Copyright (c) 2018 David Kruger.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,13 +27,22 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-from luxon import Model
+from uuid import uuid4
 
+from luxon import register
+from luxon import SQLModel
+from luxon.utils.timezone import now
 
-class Element(Model):
-    host = Model.String(null=False)
-    username = Model.String(null=False)
-    password = Model.String(null=True, password=True)
-    port = Model.Integer(null=True)
-    timeout = Model.Integer(null=True)
-    private_key = Model.Text(null=True)
+from netrino.models.service_templates import netrino_service_template
+
+@register.model()
+class netrino_service_request(SQLModel):
+    id = SQLModel.Uuid(default=uuid4, internal=True)
+    domain = SQLModel.Fqdn(internal=True)
+    tenant_id = SQLModel.Uuid(internal=True)
+    service_template = SQLModel.Uuid(null=False)
+    creation_time = SQLModel.DateTime(default=now, readonly=True)
+    service = SQLModel.ForeignKey(service_template,
+                                  netrino_service_template.id)
+    nsr_indices = SQLModel.Index(domain, tenant_id)
+    primary_key = id

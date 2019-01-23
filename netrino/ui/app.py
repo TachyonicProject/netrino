@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Frans Rademan, David Kruger.
+# Copyright (c) 2018 Dave Kruger.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,13 +27,8 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-from luxon import Model
-
-
-class Element(Model):
-    host = Model.String(null=False)
-    username = Model.String(null=False)
-    password = Model.String(null=True, password=True)
-    port = Model.Integer(null=True)
-    timeout = Model.Integer(null=True)
-    private_key = Model.Text(null=True)
+from luxon import g
+#import netrino.ui.models
+import netrino.ui.views
+from luxon import register
+register.javascript('/netrino.ui/netrino.js')

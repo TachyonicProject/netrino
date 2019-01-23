@@ -1,0 +1,16 @@
+{% extends "photonic/view.html" %}
+{% block content %}
+<table class="display" data-endpoint='orchestration' data-url="/v1/service-requests" width="100%">
+    <thead>
+        <tr>
+            <th id='service_template'>Name</th>
+            <th data-modal data-href="/services/requests" width="2rem">
+                <span data-feather="edit"></span>
+            </th>
+        </tr>
+    </thead>
+</table>
+{% endblock %}
+{% block buttons %}
+<a class="btn btn-primary" href="{{APP}}/services/requests/available">Add Service</a>
+{% endblock %}

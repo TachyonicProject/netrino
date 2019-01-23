@@ -36,7 +36,7 @@ Each value is also a dictionary, with the path as key and its mapped
 value as the value.
 
 1. Decorate each function with @self_reference
-2. if the Entrypoint name is different than the function name,
+2. if the Entrypoint name is differs from the function name,
     set self.name equal to the entrypoint name, and
 3. initialize with self = prepare_mapper(self)
 

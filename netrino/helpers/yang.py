@@ -29,6 +29,9 @@
 # THE POSSIBILITY OF SUCH DAMAGE.
 import re
 from lxml import etree
+from luxon import g
+from netrino.utils.yang_lexer import YangModel
+
 
 def module2namespace(location, client):
     """Helper function to extract namespace from YANG module.
@@ -47,6 +50,7 @@ def module2namespace(location, client):
         if match:
             return match.group(1)
     return None
+
 
 class RFC7951dict():
     """Class to generate obj's to process RFC7951 formatted JSON dicts.
@@ -89,3 +93,38 @@ class RFC7951dict():
             elif isinstance(json_dict[k], (dict, )):
                 self.to_etree(json_dict[k], sub_ele)
         return element
+
+def format_yang(s, result='', indent=0):
+    if len(s.sub_statements):
+        if s.name == "container":
+            result += '<p><h4>%s</h4></p>' % (s.node)
+        elif s.name == "leaf":
+            result += '<div class="form-group">'
+            result += '<label for="%s">%s</label>' % (s.node, s.node,)
+            result += '<input type="text" class="form-control" '
+            result += 'id="%s" name="%s"></div>' % (s.node, s.node,)
+        indent += 40
+        for s in s.sub_statements:
+            result = format_yang(s, result, indent)
+        # result += '<p style="margin-left: %spx">}</p>' % (indent - 40,)
+
+    return result
+
+
+
+def yang_to_html_form(yang_model):
+    """Returns HTML Form based on YANG model
+
+    Args:
+        yang_model (str): Name of YANG model
+
+    Returns:
+        HTML form based on YANG model.
+    """
+    client = g.current_request.context.api
+    location = 'yang/%s.yang' % yang_model
+    model = client.execute('GET', location, endpoint='objectstore').text
+    yang_model = YangModel(model)
+    form_html = format_yang(yang_model)
+    return form_html + '</div>'
+
