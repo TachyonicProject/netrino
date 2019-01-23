@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 David Kruger.
+# Copyright (c) 2018 Christiaan Frans Rademan.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,23 +27,42 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
+from luxon import g
 from luxon import router
 from luxon import register
-from luxon.helpers.api import raw_list
 
-from luxon.exceptions import NotFoundError
+from luxon.helpers.api import raw_list
+from psychokinetic import Openstack
 
 
 @register.resources()
-class YANGModels():
+class OpenstackProxy():
     def __init__(self):
-        router.add('GET','/v1/yang-models', self.list, tag='services')
+        router.add('GET',
+                   'v1/openstack/{element}/{endpoint}/{resource}',
+                   self.proxy,
+                   tag='services')
 
-    def list(self, req, resp):
-        """Eventually we need to provide a list of YANG models
-        available in the object store. For now simply returning hard coded
-        value until object store is ready.
-        """
-        models = ['contrail-virtual-network', 'contrail-physical-router',
-                  'contrail-service-instance']
-        return raw_list(req, models)
+
+    def proxy(self, req, resp, element, endpoint, resource):
+        # This was copied from another endpoint. If it is going to
+        # remain in netrino, this api.execute should be changed to
+        # database lookup instead.
+
+        # Todo: perhaps store 'os_token' in session...
+        md = req.context.api.execute('GET',
+                                     'v1/element/%s/openstack' % element,
+                                     endpoint='netrino')
+        md = md.json['metadata']
+
+        os = Openstack(md['keystone_url'],md['region'])
+        os.identity.authenticate(md['username'], md['password'],
+                                 req.context_domain)
+        os.identity.scope(project_name=g.tenant_name(req),
+                          domain=req.context_domain)
+            # req.session['os_token'] = os._scoped_token
+            # req.session.save()
+        results = getattr(os, endpoint).execute('GET',resource).json
+
+        return raw_list(req, results[resource], context=False)
+
