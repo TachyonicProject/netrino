@@ -58,6 +58,30 @@ def get_related(eid, table, where):
 
     return related
 
+def get_element_interface(eid, interface):
+    with db() as conn:
+        cursor = conn.execute('SELECT interface, metadata, creation_time' +
+                              ' FROM netrino_element_interface' +
+                              ' WHERE element_id = %s' +
+                              ' AND interface = %s', (eid, interface,))
+        interface = cursor.fetchone()
+
+        if interface is None:
+            raise NotFoundError('Interface not found')
+
+        element = conn.execute('SELECT encrypt_metadata FROM '
+                               'netrino_element WHERE id = %s',
+                               eid).fetchone()
+
+        if element['encrypt_metadata']:
+            crypto = Crypto()
+            interface['metadata'] = crypto.decrypt(interface['metadata'])
+
+        interface['metadata'] = js.loads(interface['metadata'])
+
+        return interface
+
+
 @register.resources()
 class Elements(object):
     def __init__(self):
@@ -246,27 +270,7 @@ class Elements(object):
         return self.view_interface(req, resp, eid, interface)
 
     def view_interface(self, req, resp, eid, interface):
-        with db() as conn:
-            cursor = conn.execute('SELECT interface, metadata, creation_time' +
-                                  ' FROM netrino_element_interface' +
-                                  ' WHERE element_id = %s' +
-                                  ' AND interface = %s', (eid, interface,))
-            interface = cursor.fetchone()
-
-            if interface is None:
-                raise NotFoundError('Interface not found')
-
-            element = conn.execute('SELECT encrypt_metadata FROM '
-                                   'netrino_element WHERE id = %s',
-                                   eid).fetchone()
-
-            if element['encrypt_metadata']:
-                crypto = Crypto()
-                interface['metadata'] = crypto.decrypt(interface['metadata'])
-
-            interface['metadata'] = js.loads(interface['metadata'])
-
-            return interface
+        return get_element_interface(eid, interface )
 
     def update_interface(self, req, resp, eid, interface):
         # In case not all fields was submitted,
