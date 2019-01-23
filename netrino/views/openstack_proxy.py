@@ -34,6 +34,8 @@ from luxon import register
 from luxon.helpers.api import raw_list
 from psychokinetic import Openstack
 
+from netrino.views.elements import get_element_interface
+
 
 @register.resources()
 class OpenstackProxy():
@@ -45,16 +47,9 @@ class OpenstackProxy():
 
 
     def proxy(self, req, resp, element, endpoint, resource):
-        # This was copied from another endpoint. If it is going to
-        # remain in netrino, this api.execute should be changed to
-        # database lookup instead.
-
         # Todo: perhaps store 'os_token' in session...
-        md = req.context.api.execute('GET',
-                                     'v1/element/%s/openstack' % element,
-                                     endpoint='netrino')
-        md = md.json['metadata']
 
+        md = get_element_interface(element, 'openstack')['metadata']
         os = Openstack(md['keystone_url'],md['region'])
         os.identity.authenticate(md['username'], md['password'],
                                  req.context_domain)
