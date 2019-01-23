@@ -61,7 +61,7 @@ g.nav_menu.add('/Services/Templates',
 
 
 @register.resources()
-class Users():
+class ServiceTemplates():
     def __init__(self):
         router.add('GET',
                    '/services/templates',

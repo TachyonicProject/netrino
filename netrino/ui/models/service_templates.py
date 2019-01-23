@@ -79,7 +79,11 @@ class netrino_servicetemplate_mappings(Model):
 class netrino_user_select(Model):
     id = Model.Uuid(default=uuid4, internal=True)
     path = Model.String(null=False)
-    url = Model.String(null=False)
+    name = Model.String()
+    description = Model.String()
+    type = Model.String(default='text')
+    url = Model.String()
+    endpoint = Model.String()
     servicetemplate_entry = Model.Uuid(null=False, hidden=True)
 
 @register.model()
@@ -109,3 +113,13 @@ class netrino_servicetemplate_copy(Model):
     source_path = Model.String(null=False)
     entry_no = Model.Integer()
     servicetemplate_entry = Model.Uuid(null=False, hidden=True)
+
+@register.model()
+class netrino_custom_resource(Model):
+    id = Model.Uuid(default=uuid4, internal=True)
+    type = Model.String(null=False)
+    name = Model.String(null=False)
+    value = Model.String()
+    domain = Model.Fqdn(internal=True)
+    tenant_id = Model.Uuid(internal=True)
+    creation_time = Model.DateTime(default=now, readonly=True)

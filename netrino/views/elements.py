@@ -34,7 +34,9 @@ from luxon import router
 from luxon import db
 from luxon.utils import js
 from luxon.utils.pkg import EntryPoints
-from luxon.exceptions import NotFoundError, SQLOperationalError
+from luxon.exceptions import NotFoundError
+from luxon.exceptions import SQLOperationalError
+from luxon.exceptions import SQLProgrammingError
 from luxon.helpers.api import raw_list, sql_list, obj
 from luxon.helpers.access import validate_access
 from luxon.utils.cast import to_list
@@ -196,7 +198,9 @@ class Elements(object):
                                       "WHERE id=%s",
                                       element['parent_id']).fetchone()
                 to_return['parent'] = parent
-            except SQLOperationalError:
+            except (SQLOperationalError, SQLProgrammingError,):
+                # when parent_id is None, sqlie raises Operational error,
+                # whereas mysql raises Programming
                 pass
 
         to_return['children'] = children
@@ -218,8 +222,8 @@ class Elements(object):
         element.commit()
         return self.view_element(req, resp, eid)
 
-    def delete_element(self, req, resp, id):
-        element = obj(req, netrino_element, sql_id=id)
+    def delete_element(self, req, resp, eid):
+        element = obj(req, netrino_element, sql_id=eid)
         element.commit()
         return element
 

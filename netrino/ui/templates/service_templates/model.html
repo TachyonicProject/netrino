@@ -112,6 +112,7 @@
     <table class="display" data-url="v1/service-template/{{ id }}/model/{{ model }}/allocations/user_select" width="100%" data-endpoint="orchestration">
         <thead>
             <th id='path'>Path</th>
+            <th id='name'>Name</th>
             <th id='url'>URL</th>
             {% if 'edit' in view.lower() %}
             <th data-confirm="Delete Entry?" data-href="/services/templates/allocate/user_select" data-close width="2rem">

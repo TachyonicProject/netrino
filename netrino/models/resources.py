@@ -45,3 +45,15 @@ class netrino_resource_map(SQLModel):
     value = SQLModel.Text()
     creation_time = SQLModel.DateTime(default=now, readonly=True)
     primary_key = id
+
+@register.model()
+class netrino_custom_resource(SQLModel):
+    id = SQLModel.Uuid(default=uuid4, internal=True)
+    type = SQLModel.String(null=False)
+    name = SQLModel.String(null=False)
+    value = SQLModel.String()
+    domain = SQLModel.Fqdn(internal=True)
+    tenant_id = SQLModel.Uuid(internal=True)
+    primary_key = id
+    creation_time = SQLModel.DateTime(default=now, readonly=True)
+    resource_index = SQLModel.Index(type,domain,tenant_id)

@@ -46,6 +46,6 @@ class YANGModels():
         available in the object store. For now simply returning hard coded
         value until object store is ready.
         """
-        models = ['contrail_virtual_network', 'contrail_physical_router',
-                  'contrail_service_instance']
+        models = ['contrail-virtual-network', 'contrail-physical-router',
+                  'contrail-service-instance']
         return raw_list(req, models)

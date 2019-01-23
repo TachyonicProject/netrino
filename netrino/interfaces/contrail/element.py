@@ -42,6 +42,6 @@ class Element(Model):
     keystone_url = Model.String(null=False)
     contrail_url = Model.String(null=False)
     username = Model.String(null=False)
-    password = Model.String(null=False, password=True)
+    password = Model.Password(null=False)
     region = Model.String(null=True)
     interface = Model.Enum('admin', 'public', 'internal', null=True)

@@ -1,0 +1,13 @@
+{% extends "photonic/view.html" %}
+
+{% block content %}
+    <form id="form" method='post' enctype="multipart/form-data">
+        {{ form }}
+    </form>
+{% endblock %}
+
+{% block buttons %}
+    <a href="{{ APP }}/resources/custom/{{id}}" class="btn btn-default">Cancel</a>
+    <a data-confirm="Delete resource?" data-closeall href="{{ APP }}/resources/custom/delete/{{id}}" class="btn btn-danger">Delete</a>
+    <a href="{{ APP }}/resources/custom/edit/{{id}}" data-form="form" class="btn btn-primary">Update</a>
+{% endblock %}

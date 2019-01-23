@@ -35,6 +35,6 @@ from luxon import Model
 class Element(Model):
     keystone_url = Model.String(null=False)
     username = Model.String(null=False)
-    password = Model.String(null=False, password=True)
+    password = Model.Password(null=False, password=True)
     region = Model.String(null=True)
     interface = Model.Enum('admin', 'public', 'internal', null=True)
