@@ -14,7 +14,7 @@ description = project
 author = 'Myria Solutions (PTY) Ltd'
 email = 'project@tachyonic.org'
 license = 'BSD3-Clause'
-copyright = '2018 ' + author
+copyright = '2018-2019 ' + author
 url = 'http://www.tachyonic.org'
 identity = project + ' v' + version
 
