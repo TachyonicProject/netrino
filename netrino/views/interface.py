@@ -29,10 +29,13 @@
 # THE POSSIBILITY OF SUCH DAMAGE.
 from luxon import router
 from luxon import register
+from luxon import db
 
 from luxon.utils.pkg import EntryPoints
 from luxon.exceptions import NotFoundError
+from luxon.helpers.api import raw_list
 
+from netrino.helpers.elements import elements_with_interface
 
 METHODS = ('GET','POST','PUT','DELETE','PATCH',
            'OPTIONS','HEAD','TRACE','CONNECT')
@@ -41,6 +44,8 @@ METHODS = ('GET','POST','PUT','DELETE','PATCH',
 class Interface():
     def __init__(self):
         router.add('GET','/v1/interfaces', self.list, tag='services')
+        router.add('GET', '/v1/interfaces/{interface}', self.list_elements,
+                   tag='services')
         router.add(METHODS,
                    '/v1/interface/{id}/{interface}/{property}',
                    self.interface, tag='services')
@@ -53,8 +58,22 @@ class Interface():
         """
         interfaces = []
         for e in EntryPoints('netrino_interfaces'):
-            interfaces.append(e)
-        return interfaces
+            interfaces.append({'id': e, 'name': e})
+        return raw_list(req, interfaces)
+
+    def list_elements(self, req, resp, interface):
+        """For a given interface, list all elements that supports this
+        interface
+
+        Args:
+            interface (str): Netrino Interface in question.
+
+        Returns:
+            list of elements id's that supports this interface.
+        """
+        return elements_with_interface(interface)
+
+
 
     def interface(self, req, resp, id, interface, property):
         """ Interact with element via given interface and method.

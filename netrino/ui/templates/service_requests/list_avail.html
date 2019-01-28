@@ -1,0 +1,21 @@
+{% extends "photonic/view.html" %}
+{% block content %}
+<div class="card-deck">
+{% for service in services %}
+    <div class="col-sm-3">
+        <div class="card text-center" style="width: 18rem;">
+            <img class="card-img-top" src="//placehold.it/500x280" alt="{{ service.name }}">
+            <div class="card-body">
+                <h5 class="card-title">{{ service.name }}</h5>
+                <a href="{{ APP }}/services/requests/{{ service.id }}" class="btn btn-primary" data-modal>Order</a>
+            </div>
+            <div class="card-footer"><small class="text-muted">Free</small></div>
+        </div>
+    </div>
+
+{%  endfor %}
+</div>
+{% endblock %}
+{% block buttons %}
+    <a href="{{ APP }}/services/requests" class="btn btn-default">Cancel</a>
+{% endblock %}

@@ -27,6 +27,12 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
+
+"""
+These Models define the model for the metadata associated with each
+Element's Interface
+"""
+
 from uuid import uuid4
 
 from luxon import Model
@@ -36,6 +42,6 @@ class Element(Model):
     keystone_url = Model.String(null=False)
     contrail_url = Model.String(null=False)
     username = Model.String(null=False)
-    password = Model.String(null=False)
+    password = Model.Password(null=False)
     region = Model.String(null=True)
     interface = Model.Enum('admin', 'public', 'internal', null=True)

@@ -16,17 +16,15 @@ graft tests
 include setup.py
 
 # Templates
-graft luxon/ui/templates
-graft luxon/templates
+graft netrino/ui/templates
 
 # Static
-graft luxon/ui/static
-graft luxon/static
+graft netrino/ui/static
 
 # Other
-recursive-include luxon *.json
-recursive-include luxon *.ini
+recursive-include netrino *.json
+recursive-include netrino *.ini
 
 # NO-CYTHON PACKAGES
-recursive-exclude luxon *.c
-recursive-exclude luxon *.so
+recursive-exclude netrino *.c
+recursive-exclude netrino *.so

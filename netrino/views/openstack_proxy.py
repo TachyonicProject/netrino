@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Frans Rademan, David Kruger.
+# Copyright (c) 2018 Christiaan Frans Rademan.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,37 +27,37 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-from uuid import uuid4
-
+from luxon import g
+from luxon import router
 from luxon import register
-from luxon import SQLModel
-from luxon.utils.timezone import now
 
-@register.model()
-class netrino_prefix(SQLModel):
-    id = SQLModel.Uuid(internal=True, default=uuid4)
-    a1 = SQLModel.BigInt()
-    a2 = SQLModel.BigInt()
-    a3 = SQLModel.BigInt()
-    a4 = SQLModel.BigInt(null=False)
-    name = SQLModel.Text(null=False)
-    parent = SQLModel.Uuid()
-    version = SQLModel.Integer(default=4)
-    free = SQLModel.Boolean()
-    rib = SQLModel.String()
-    prefix_len = SQLModel.Integer()
-    type = SQLModel.String(null=True)
-    creation_time = SQLModel.DateTime(default=now, readonly=True)
-    prefix_indices = SQLModel.Index(name,a1,a2,a3,a4,prefix_len,rib,type)
-    primary_key = id
+from luxon.helpers.api import raw_list
+from psychokinetic import Openstack
+
+from netrino.views.elements import get_element_interface
 
 
-@register.model()
-class netrino_prefix_tag(SQLModel):
-    id = SQLModel.Uuid(default=uuid4, internal=True)
-    prefix = SQLModel.String()
-    tag = SQLModel.Text(null=False)
-    creation_time = SQLModel.DateTime(default=now, readonly=True)
-    unique_prefix_tag = SQLModel.UniqueIndex(prefix, tag)
-    prefix_tag_prefix_ref = SQLModel.ForeignKey(prefix, netrino_prefix.id)
-    primary_key = id
+@register.resources()
+class OpenstackProxy():
+    def __init__(self):
+        router.add('GET',
+                   'v1/openstack/{element}/{endpoint}/{resource}',
+                   self.proxy,
+                   tag='services')
+
+
+    def proxy(self, req, resp, element, endpoint, resource):
+        # Todo: perhaps store 'os_token' in session...
+
+        md = get_element_interface(element, 'openstack')['metadata']
+        os = Openstack(md['keystone_url'],md['region'])
+        os.identity.authenticate(md['username'], md['password'],
+                                 req.context_domain)
+        os.identity.scope(project_name=g.tenant_name(req),
+                          domain=req.context_domain)
+            # req.session['os_token'] = os._scoped_token
+            # req.session.save()
+        results = getattr(os, endpoint).execute('GET',resource).json
+
+        return raw_list(req, results[resource], context=False)
+

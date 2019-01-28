@@ -1,0 +1,34 @@
+{% extends "photonic/view.html" %}
+
+{% block content %}
+    <form method='post' enctype="multipart/form-data" disabled>
+        {% if parent %}
+        <div class="form-group">
+            <label for="parent">Parent</label>
+            <input type="text" class="form-control" id="parent_id" name="parent" readonly="None" disabled="None" value="{{parent}}">
+        </div>
+        {% endif %}
+        {{ form }}
+    </form>
+    <table class="display" data-url="/v1/element/{{id}}&view=children" width="100%" data-endpoint="orchestration">
+        <thead>
+            <th id='child_name'>Child Elements</th>
+            <th data-modal data-href="/infrastructure/elements" width="2rem">
+                <span data-feather="eye"></span>
+            </th>
+        </thead>
+    </table>
+    <table class="display" data-url="/v1/element/{{id}}&view=interfaces" width="100%" data-endpoint="orchestration">
+        <thead>
+            <th id='interface'>Element Interface</th>
+            <th data-modal data-href="/infrastructure/interfaces/{{id}}" width="2rem">
+                <span data-feather="eye"></span>
+            </th>
+        </thead>
+    </table>
+{% endblock %}
+
+{% block buttons %}
+    <a href="#" onclick="close_window();" class="btn btn-default">Back</a>
+    <a href="{{ APP }}/infrastructure/elements/edit/{{id}}" class="btn btn-primary">Edit</a>
+{% endblock %}

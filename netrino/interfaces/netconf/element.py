@@ -33,7 +33,7 @@ from luxon import Model
 class Element(Model):
     host = Model.String(null=False)
     username = Model.String(null=False)
-    password = Model.String(null=True)
+    password = Model.String(null=True, password=True)
     port = Model.Integer(null=True)
     timeout = Model.Integer(null=True)
     private_key = Model.Text(null=True)

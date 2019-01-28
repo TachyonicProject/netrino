@@ -36,8 +36,8 @@ from netrino import cmd
 
 
 def main(argv):
-    tachweb = Cmd('TachWeb', ini=False, path='/tmp')
-    tachweb()
+    netrino = Cmd('netrino', ini=False, path='/tmp')
+    netrino()
 
 
 def entry_point():
