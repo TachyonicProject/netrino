@@ -54,10 +54,10 @@ class Interface():
                    self.property, tag='services')
 
     def list(self, req, resp):
-        """Lists all the registered netrino_interfaces Entrypoints.
+        """Lists all the registered tachyonic_interfaces Entrypoints.
         """
         interfaces = []
-        for e in EntryPoints('netrino_interfaces'):
+        for e in EntryPoints('tachyonic_interfaces'):
             interfaces.append({'id': e, 'name': e})
         return raw_list(req, interfaces)
 
@@ -86,10 +86,10 @@ class Interface():
         Returns:
             Executes the method, and returns the result.
         """
-        netrino_interface = EntryPoints('netrino_interfaces')
+        tachyonic_interface = EntryPoints('tachyonic_interfaces')
 
         try:
-            with netrino_interface[interface](id) as obj:
+            with tachyonic_interface[interface](id) as obj:
                 method = getattr(obj, property)
                 return method(req)
         except KeyError:
@@ -108,8 +108,8 @@ class Interface():
         Returns:
             Executes the method, and returns the result.
         """
-        netrino_interface = EntryPoints('netrino_interfaces')
-        with netrino_interface[interface](id) as obj:
+        tachyonic_interface = EntryPoints('tachyonic_interfaces')
+        with tachyonic_interface[interface](id) as obj:
             prop_obj = getattr(obj, property)
             method = getattr(prop_obj, method)
             return method(req)

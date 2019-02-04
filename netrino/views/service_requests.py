@@ -64,10 +64,10 @@ class SerivceRequests(object):
               'WHERE service_template=? ORDER BY entry_no'
         with db() as conn:
             entries = conn.execute(esql, stemplate).fetchall()
-        netrino_interface = EntryPoints('netrino_interfaces')
+        tachyonic_interface = EntryPoints('tachyonic_interfaces')
         for e in entries:
             try:
-                with netrino_interface[e['interface']](e['element']) as obj:
+                with tachyonic_interface[e['interface']](e['element']) as obj:
                     method = getattr(obj, property)
                     return method(req)
             except KeyError:

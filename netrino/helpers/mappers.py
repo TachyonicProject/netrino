@@ -178,7 +178,7 @@ def contrail_vn_plus_existing(self=None):
     req = g.current_request
     _domain = req.context_domain
     _project = tenant_name_from_context()
-    netrino_interface = EntryPoints('netrino_interfaces')
+    tachyonic_interface = EntryPoints('tachyonic_interfaces')
     srid = req.json['id']
     for e in self.data:
         self.results[e] = {}
@@ -207,7 +207,7 @@ def contrail_vn_plus_existing(self=None):
                 raise HTTPNotFound("Unable to determine Virtual Network ID "
                                    "for Service Request '%s' entry '%s'" % (
                                        srid, vn_entry,))
-            with netrino_interface['contrail'](contrail_id) as ct:
+            with tachyonic_interface['contrail'](contrail_id) as ct:
                 ct.contrail.scope(domain=_domain, project_name=_project)
                 existing = []
                 try:
