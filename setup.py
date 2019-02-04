@@ -285,7 +285,7 @@ setup_dict = dict(
         'netrino_discover': [
             'netconf = netrino.interfaces.netconf.discover:discover'
         ],
-        'netrino_interfaces': [
+        'tachyonic_interfaces': [
             'netconf = netrino.interfaces.netconf.interface:Interface',
             'openstack = netrino.interfaces.openstack.interface:Interface',
             'contrail = netrino.interfaces.contrail.interface:Interface'
