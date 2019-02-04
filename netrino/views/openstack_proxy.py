@@ -34,7 +34,7 @@ from luxon import register
 from luxon.helpers.api import raw_list
 from psychokinetic import Openstack
 
-from netrino.views.elements import get_element_interface
+from infinitystone.views.elements import get_element_interface
 
 
 @register.resources()
