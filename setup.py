@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018-2019 Christiaan Frans Rademan.
+# Copyright (c) 2018-2019 Christiaan Frans Rademan, Dave Kruger.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -183,20 +183,15 @@ setup_dict = dict(
     zip_safe=False,  # don't use eggs
     python_requires='>=3.6',
     entry_points={
-        'netrino_discover': [
-            'netconf = netrino.interfaces.netconf.discover:discover'
+        'tachyonic.element.classifications': [
+            'ont = netrino.elements.fttx.ont:ONT'
         ],
-        'tachyonic_interfaces': [
-            'netconf = netrino.interfaces.netconf.interface:Interface',
-            'openstack = netrino.interfaces.openstack.interface:Interface',
-            'contrail = netrino.interfaces.contrail.interface:Interface'
+        'tachyonic.element.interfaces': [
+            'netconf = netrino.interfaces.netconf:Interface',
+            'openstack = netrino.interfaces.openstack:Interface',
+            'contrail = netrino.interfaces.contrail:Interface'
         ],
-        'netrino_elements': [
-            'netconf = netrino.interfaces.netconf.element:Element',
-            'openstack = netrino.interfaces.openstack.element:Element',
-            'contrail = netrino.interfaces.contrail.element:Element'
-        ],
-        'netrino_mappers': [
+        'tachyonic.netrino.mappers': [
             'infinitystone_domain = '
             'netrino.helpers.mappers:domain_from_context',
             'infinitystone_tenant = '
@@ -205,14 +200,6 @@ setup_dict = dict(
             'netrino.helpers.mappers:contrail_vn_name_from_context',
             'contrail_vn_plus_existing = '
             'netrino.helpers.mappers:contrail_vn_plus_existing',
-        ],
-        'netrino_resources': [
-            'element = netrino.resources.element.element:Element',
-            'ipv4 = netrino.resources.ipv4.ipv4:IPv4',
-            'ipv6 = netrino.resources.ipv6.ipv6:IPv6',
-        ],
-        'console_scripts': [
-            'netrino = netrino.main:entry_point'
         ],
     }
 )
