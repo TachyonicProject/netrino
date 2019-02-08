@@ -30,5 +30,5 @@
 from luxon import Model
 
 class ONT(Model):
-    model = Model.String()
+    serial = Model.String()
     password = Model.Password()
