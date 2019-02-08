@@ -24,6 +24,9 @@ graft netrino/ui/static
 # Models
 graft netrino/ui/models
 
+# Element Models
+graft netrino/elements
+
 # Other
 recursive-include netrino *.json
 recursive-include netrino *.ini
