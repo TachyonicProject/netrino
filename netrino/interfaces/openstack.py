@@ -27,26 +27,33 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
+from copy import deepcopy
 
 from netrino.interfaces.interface import Interface as BaseInterface
 from netrino.utils.interface import getScope
 
-from psychokinetic import Openstack
-from psychokinetic import Contrail
+from psychokinetic.openstack.openstack import Openstack
 
 from luxon.exceptions import FieldMissing
-from luxon import g
+from luxon import Model
+
+class Element(Model):
+    keystone_url = Model.String(null=False)
+    username = Model.String(null=False)
+    password = Model.Password(null=False, password=True)
+    region = Model.String(null=True)
+    interface = Model.Enum('admin', 'public', 'internal', null=True)
 
 
 class Interface(BaseInterface):
-    """Contrail Interface/driver.
+    """Openstack Interface/driver.
 
-    Wrapper around psychokinetic.Contrail obj
+    Wrapper around psychokinetic.Openstack obj
 
     .. code:: python
 
-        with Interface('element-uuid') as ct:
-            networks = ct.execute(req)
+        with Interface('element-uuid') as os:
+            projects = os.identity.execute(req)
 
     Element credentials obtained from metadata in database.
     req body must contain "uri", "data", "method" and either "project_name"
@@ -56,13 +63,14 @@ class Interface(BaseInterface):
     Args:
         uuid (str): UUID of element
     """
+    model = Element
 
     def __init__(self, uuid):
-        super().__init__(uuid, "contrail")
+        super().__init__(uuid, "openstack")
 
         if not 'keystone_url' in self.metadata:
             raise FieldMissing(field="keystone_url",
-                               label="Keystone URL",
+                               label="Openstack Interface",
                                description="No Keystone URL for element '%s'" %
                                            self.uuid)
 
@@ -70,31 +78,34 @@ class Interface(BaseInterface):
         self.os = Openstack(self.metadata['keystone_url'],
                             self.metadata['region'],
                             self.metadata['interface'])
-        self.contrail = Contrail(self.os, self.metadata['contrail_url'])
 
     def __enter__(self):
-        self.contrail.authenticate(self.metadata['username'],
-                                   self.metadata['password'],
-                                   g.current_request.context_domain)
+        self.os.identity.authenticate(self.metadata['username'],
+                                      self.metadata['password'],
+                                      self.metadata['domain'])
         return self
 
     def __exit__(self, *args, **kwargs):
         self.os.identity.revoke(self.os._login_token)
 
     def __getattr__(self, name):
-        return getattr(self.contrail, name)
-
-    def execute(self, req, *args, **kwargs):
-        # Since we are wrapping around psychokinetic's contrail
-        # client, we have to modify the execute method to:
+        original_attr = getattr(self.os, name)
+        # Since we are wrapping around psychokinetic's openstack
+        # client, we have to modify the execute method of the
+        # openstack endpoint method to:
         # * take req as first arg, and
         # * return json instead of the default reponse object.
-        method = req.json['method']
-        uri = req.json['uri']
-        if 'data' in req.json:
-            kwargs['data'] = req.json['data']
-        self.contrail.scope(
-            **getScope(req, infinitystone=['domain'],
-                       one_of=['project_id', 'project_name']))
-        result = self.contrail.execute(method, uri, *args, **kwargs)
-        return result.json
+        attr = deepcopy(original_attr)
+        if hasattr(original_attr, "execute"):
+            def execute(req, *args, **kwargs):
+                method = req.json['method']
+                uri = req.json['uri']
+                if 'data' in req.json:
+                    kwargs['data'] = req.json['data']
+                self.os.identity.scope(
+                    **getScope(req, infinitystone=['domain'],
+                               one_of=['project_id', 'project_name']))
+                result = original_attr.execute(method, uri, *args, **kwargs)
+                return result.json
+            attr.execute = execute
+        return attr

@@ -123,7 +123,7 @@ def mappings(entries):
         mappers = conn.execute(sql, sql_entries).fetchall()
         mappers = [m['mapper'] for m in mappers]
         for m in mappers:
-            map_entries = EntryPoints('netrino_mappers')[m]()
+            map_entries = EntryPoints('tachyonic.netrino.mappers')[m]()
             for me in map_entries:
                 entry = find_entry(me, req.json['models'])
                 if not entry:
