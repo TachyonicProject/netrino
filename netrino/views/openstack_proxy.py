@@ -34,8 +34,6 @@ from luxon import register
 from luxon.helpers.api import raw_list
 from psychokinetic import Openstack
 
-from netrino.views.elements import get_element_interface
-
 
 @register.resources()
 class OpenstackProxy():
@@ -49,7 +47,8 @@ class OpenstackProxy():
     def proxy(self, req, resp, element, endpoint, resource):
         # Todo: perhaps store 'os_token' in session...
 
-        md = get_element_interface(element, 'openstack')['metadata']
+        res = req.context.api.execute('GET','v1/element/%s/openstack' % element)
+        md = res.json['metadata']
         os = Openstack(md['keystone_url'],md['region'])
         os.identity.authenticate(md['username'], md['password'],
                                  req.context_domain)

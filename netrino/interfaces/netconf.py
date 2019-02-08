@@ -27,13 +27,26 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-from netrino.interfaces.interface import Interface as BaseInterface
 
-# (@Vuader) Note: until ncclient has merged Tachyonic's pull request,
-# remember to clone & install ncclient from TachyonicProject.
-from ncclient import manager
-from netrino.helpers.yang import RFC7951dict
-from luxon.exceptions import NotFoundError
+from netrino.interfaces.interface import Interface as BaseInterface
+from netrino.utils.interface import getScope
+
+from psychokinetic import Openstack
+from psychokinetic import Contrail
+
+from luxon.exceptions import FieldMissing
+from luxon import g
+
+from luxon import Model
+
+
+class Element(Model):
+    host = Model.String(null=False)
+    username = Model.String(null=False)
+    password = Model.String(null=True, password=True)
+    port = Model.Integer(null=True)
+    timeout = Model.Integer(null=True)
+    private_key = Model.Text(null=True)
 
 
 class Interface(BaseInterface):
@@ -55,6 +68,7 @@ class Interface(BaseInterface):
         default_operation (str): default Netconf operation. (defaults to merge)
         target (str): Netconf target. (defaults to candidate)
     """
+    model = Element
 
     def __init__(self, uuid, default_operation="merge", target="candidate"):
         super().__init__(uuid, "netconf")
@@ -95,3 +109,6 @@ class Interface(BaseInterface):
         self.conn.commit()
         self.conn.unlock()
         return {'result': str(result)}
+
+
+

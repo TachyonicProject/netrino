@@ -33,6 +33,8 @@ from luxon import GetLogger
 log = GetLogger(__name__)
 
 class Interface(object):
+    model = None
+
     def __init__(self, uuid, interface):
         self.uuid = uuid
         self.metadata = get_element_metadata(uuid, interface)
