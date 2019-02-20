@@ -1,8 +1,8 @@
 {% extends "photonic/view.html" %}
 {% block content %}
 <div class="row">
-    <div class="col-sm-6">
-        <img src="{{APP}}/apiproxy?url=/v1/product/{{id}}/image&endpoint=orchestration" alt="Product Image" style="max-width:100px;max-height:100px;">
+        <div class="col-sm-6 offset-md-3">
+        <img src="{{APP}}/apiproxy?url=/v1/product/{{id}}/image&endpoint=orchestration" alt="Product Image" style="max-width:100px;max-height:100px;display:block;margin-left:auto;margin-right:auto">
     </div>
 </div>
 <form method='post' enctype="multipart/form-data" disabled>

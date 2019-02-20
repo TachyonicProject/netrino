@@ -40,7 +40,7 @@ class netrino_product(Model):
     name = Model.String(null=False)
     parent_id = Model.Uuid(hidden=True)
     price = Model.Integer(default=0)
-    sale_price = Model.Integer(default=0)
+    monthly = Model.Boolean()
     description = Model.LongText()
     domain = Model.Fqdn(internal=True)
     creation_time = Model.DateTime(default=now, internal=True)

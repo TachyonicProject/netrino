@@ -86,7 +86,7 @@ class Products:
                                                   'name',
                                                   'parent_id',
                                                   'price',
-                                                  'sale_price',
+                                                  'monthly',
                                                   'description',
                                                   'creation_time')
                         )
