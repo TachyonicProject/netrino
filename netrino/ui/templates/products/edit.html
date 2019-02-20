@@ -1,0 +1,46 @@
+{% extends "photonic/view.html" %}
+
+{% block content %}
+    <form id="form" method='post' enctype="multipart/form-data">
+        {{ form }}
+    </form>
+    <h2>Image</h2>
+    <div class="row">
+        <div class="col-sm-6 offset-md-3">
+        <img src="{{APP}}/apiproxy?url=/v1/product/{{id}}/image&endpoint=orchestration" alt="Product Image" style="max-width:100px;max-height:100px;display:block;margin-left:auto;margin-right:auto">
+        </div>
+    </div>
+    <div class="row">
+    <form id="image" action="{{ APP }}/products/add-image/{{id}}" class="row" style="padding: 10px" method="post">
+        <div class="col-sm-5">
+            <input type="file" name="image_file" id="product_image" class="form-control">
+        </div>
+        <div class="col-sm-3">
+            <input type="submit" value="Set Image" class="form-control btn btn-primary">
+        </div>
+    </form>
+    </div>
+    <table class="display" data-url="/v1/product/{{id}}&view=categories" data-endpoint="orchestration" width="100%">
+        <thead>
+            <th id='name'>Category</th>
+            <th data-confirm="Remove Category?" data-href="{{APP}}/products/rm-category" data-close width="2rem">
+                <span data-feather="minus-square"></span>
+            </th>
+        </thead>
+    </table>
+    <form id='category_form' data-datatable data-msg="Succesfully added Category" autocomplete="off" enctype="multipart/form-data" class="row" action="{{ APP }}/products/add-category/{{id}}">
+        <div class="col-sm-5">
+             <select id="add_category" name="category" data-id="name" data-url="/v1/categories" data-placeholder="" data-endpoint="orchestration" data-tags="true">
+            </select>
+        </div>
+        <div class="col-sm-3">
+		  <input class="form-control btn btn-primary" type="submit" value="Add Category">
+	 </div>
+    </form>
+{% endblock %}
+
+{% block buttons %}
+    <a href="{{ APP }}/products/{{id}}" class="btn btn-default">Cancel</a>
+    <a data-confirm="Delete product?" data-closeall href="{{ APP }}/products/delete/{{id}}" class="btn btn-danger">Delete</a>
+    <a href="{{ APP }}/products/edit/{{id}}" data-form="form" class="btn btn-primary">Update</a>
+{% endblock %}

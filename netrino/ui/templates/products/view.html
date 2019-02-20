@@ -1,0 +1,16 @@
+{% extends "photonic/view.html" %}
+{% block content %}
+<div class="row">
+        <div class="col-sm-6 offset-md-3">
+        <img src="{{APP}}/apiproxy?url=/v1/product/{{id}}/image&endpoint=orchestration" alt="Product Image" style="max-width:100px;max-height:100px;display:block;margin-left:auto;margin-right:auto">
+    </div>
+</div>
+<form method='post' enctype="multipart/form-data" disabled>
+    {{ form }}
+</form>
+{% endblock %}
+
+{% block buttons %}
+    <a href="#" onclick="close_window();" class="btn btn-default">Back</a>
+    <a href="{{ APP }}/products/edit/{{id}}" class="btn btn-primary">Edit</a>
+{% endblock %}

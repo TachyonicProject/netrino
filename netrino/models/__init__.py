@@ -1,1 +1,2 @@
-from netrino.models import resources
+import netrino.models.resources
+import netrino.models.products
