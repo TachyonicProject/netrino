@@ -2,7 +2,7 @@
 {% block content %}
 <div class="row">
     <div class="col-sm-6 offset-md-3">
-        <img src="{{APP}}/apiproxy?url=/v1/product/{{id}}/image&endpoint=orchestration" alt="Product Image" style="max-width:100px;max-height:100px;display:block;margin-left:auto;margin-right:auto">
+        <img src="{{APP}}/apiproxy?url=/v1/product/{{product.id}}/image&endpoint=orchestration" alt="Product Image" style="max-width:100px;max-height:100px;display:block;margin-left:auto;margin-right:auto">
     </div>
 </div>
 <div class="row">
@@ -30,17 +30,18 @@
 &nbsp;
 </div>
 
-{%  if payment_gw %}
-    {{ payment_gw.form }}
+{% if form %}
+<form id="customize_order" method="post" enctype="multipart/form-data">
+{{ form }}
 {%  endif %}
 
 {% endblock %}
 
 {% block buttons %}
     <a href="#" onclick="close_window();" class="btn btn-default">Back</a>
-    {%  if payment_gw %}
-        <a href="#" data-form="{{ payment_gw.name }}" class="btn btn-primary" data-close>Buy</a>
+    {%  if form %}
+        <a href="{{ APP }}/order/{{ product.id }}/{{ order_id }}" data-form="customize_order" class="btn btn-primary">Order</a>
     {%  else %}
-        <a href="{{ APP }}/order/{{ order_id }}/success" class="btn btn-primary">Activate</a>
+        <a href="{{ APP }}/order/{{ pid }}/success" class="btn btn-primary">Activate</a>
     {%  endif %}
 {% endblock %}

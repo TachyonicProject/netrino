@@ -30,6 +30,20 @@
 from luxon import router
 from luxon import register
 from luxon import render_template
+from luxon import js
+from luxon.utils.pkg import EntryPoints
+from luxon.utils.bootstrap4 import form
+from luxon.utils.timezone import now
+
+
+from luxon.exceptions import FieldMissing
+
+def first_payment_gateway(product, oid):
+    _pay_gws = EntryPoints('netrino.payment.gateways')
+    for p in _pay_gws:
+        return _pay_gws[p](product, oid)
+
+    return None
 
 
 @register.resources()
@@ -37,14 +51,159 @@ class Orders():
     def __init__(self):
         router.add('GET',
                    '/order/{pid}',
+                   self.setup_order,
+                   tag='customer')
+
+        router.add(['GET', 'POST'],
+                   '/order/{pid}/{oid}',
                    self.order_product,
                    tag='customer')
 
-    def order_product(self, req, resp, pid):
+        router.add('GET',
+                   '/order/{pid}/success',
+                   self.activate_product,
+                   tag='customer')
+
+        router.add('GET',
+                   '/orders',
+                   self.orders,
+                   tag='customer')
+
+        router.add(['GET','POST'],
+                   '/order/success',
+                   self.success)
+
+        router.add(['GET','POST'],
+                   '/order/decline',
+                   self.decline)
+
+    def setup_order(self, req, resp, pid):
+        if not req.context_tenant_id:
+            raise FieldMissing('Tenant', 'Current Tenant',
+                               'Please select Tenant for this purchase')
+
+        product = req.context.api.execute('GET',
+                                          'v1/product/%s' % pid,
+                                          endpoint='orchestration').json
+
+        data = {'product_id': pid}
+
+        order = req.context.api.execute('POST',
+                                        'v1/order',
+                                        endpoint='orchestration',
+                                        data=data).json
+
+
+        if len(product['services']):
+            ep_name = product['services'][0]['entrypoint']
+            _ep = EntryPoints('netrino.product.tasks')[ep_name]
+            setup_form = form(_ep.prepare, {})
+        else:
+            return self.order_product(req, resp, pid, order['id'])
+
+
+        return render_template('netrino.ui/orders/prepare_order.html',
+                               view=product['name'],
+                               product=product,
+                               order_id=order['id'],
+                               form=setup_form)
+
+    def order_product(self, req, resp, pid, oid):
         product = req.context.api.execute('GET',
                                           'v1/product/' + pid,
                                           endpoint='orchestration').json
+
+
+        if len(req.form_dict):
+            data = {'metadata': req.form_dict}
+
+            req.context.api.execute('PUT',
+                                    'v1/order/' + oid,
+                                    endpoint='orchestration',
+                                    data=data).json
+
+        # For now just using any payment option available.
+        # In the future we'll grab the preferred payment option from
+        # settings.ini, and make this the fallback
+
+        payment_gw = first_payment_gateway(product, oid)
+
         return render_template('netrino.ui/orders/view_product.html',
-                               view="Coming Soon",
+                               view=product['name'],
                                product=product,
-                               id=pid)
+                               id=pid,
+                               order_id=oid,
+                               payment_gw=payment_gw)
+
+    def activate_product(self, req, resp, pid):
+        if not req.context_tenant_id:
+            raise FieldMissing('Tenant', 'Current Tenant',
+                               'Please select Tenant for this purchase')
+
+        req.context.api.execute('POST',
+                                'v1/activate/product/' + pid,
+                                endpoint='orchestration')
+
+        return self.orders(req, resp)
+
+    def orders(self, req, resp):
+        return render_template('netrino.ui/orders/my_orders.html',
+                               view="Coming Soon")
+
+    def success(self, req, resp):
+        result = {}
+
+        if req.method == 'POST':
+            _pay_gws = EntryPoints('netrino.payment.gateways')
+            _pg_name = [p for p in _pay_gws][0]
+
+            payment_gw = _pay_gws[_pg_name]()
+
+            result = payment_gw.success(req)
+
+            data = {'status': 'completed',
+                    'payment_date': now()}
+
+            order = req.context.api.execute('PUT',
+                                    'v1/order/' + result['order_id'],
+                                    endpoint='orchestration',
+                                    data=data).json
+
+            product = req.context.api.execute('GET',
+                                              'v1/product/'
+                                              + order['product_id'],
+                                              endpoint='orchestration').json
+
+            result['product_name'] = product['name']
+            result['payment_date'] = data['payment_date']
+
+        return render_template('netrino.ui/orders/success.html',
+                               view="Order Received",
+                               **result)
+
+
+    def decline(self, req, resp):
+        result = {}
+
+        if req.method == 'POST':
+            _pay_gws = EntryPoints('netrino.payment.gateways')
+            _pg_name = [p for p in _pay_gws][0]
+
+            payment_gw = _pay_gws[_pg_name]()
+
+            order_field = payment_gw.order_field
+
+            result = req.form_dict
+
+            order_id = result[order_field]
+
+            data = {'status': 'declined'}
+            data['metadata'] = {'failure_reason': result}
+
+            req.context.api.execute('PUT',
+                                    'v1/order/' + order_id,
+                                    endpoint='orchestration',
+                                    data=data).json
+
+        return render_template('netrino.ui/orders/decline.html',
+                               view="Order Received", result=result)
