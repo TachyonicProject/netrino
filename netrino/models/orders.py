@@ -33,50 +33,23 @@ from luxon import register
 from luxon import SQLModel
 from luxon.utils.timezone import now
 
+from netrino.models.products import netrino_product
+
 
 @register.model()
-class netrino_product(SQLModel):
+class netrino_order(SQLModel):
     id = SQLModel.Uuid(default=uuid4, internal=True)
-    name = SQLModel.String(null=False)
-    parent_id = SQLModel.Uuid()
-    price = SQLModel.Decimal(6, 2, default=0)
-    monthly = SQLModel.Boolean(default=False)
-    image = SQLModel.MediumBlob()
-    image_type = SQLModel.String()
-    description = SQLModel.LongText()
+    short_id = SQLModel.String()
+    product_id = SQLModel.Uuid(null=False)
     domain = SQLModel.Fqdn(internal=True)
+    tenant_id = SQLModel.Uuid()
+    metadata = SQLModel.MediumText()
+    price = SQLModel.Decimal(6, 2, default=0)
+    status = SQLModel.String(default="created")
+    payment_date = SQLModel.DateTime()
     creation_time = SQLModel.DateTime(default=now, internal=True)
     primary_key = id
-    product_parent = SQLModel.ForeignKey(parent_id, id, on_delete='RESTRICT')
-
-@register.model()
-class netrino_custom_attr(SQLModel):
-    id = SQLModel.Uuid(default=uuid4, internal=True)
-    name = SQLModel.String(null=False)
-    value = SQLModel.String()
-    visible = SQLModel.Boolean(default=True)
-    product_id = SQLModel.Uuid(internal=True)
-    product_ref = SQLModel.ForeignKey(product_id, netrino_product.id)
-    primary_key = id
-
-@register.model()
-class netrino_categories(SQLModel):
-    id = SQLModel.Uuid(default=uuid4, internal=True)
-    name = SQLModel.String(null=False)
-    product_id = SQLModel.Uuid(null=False)
-    product_category_ref = SQLModel.ForeignKey(product_id, netrino_product.id)
-    primary_key = id
-
-
-@register.model()
-class netrino_product_entrypoint(SQLModel):
-    id = SQLModel.Uuid(default=uuid4, internal=True)
-    product_id = SQLModel.Uuid(null=False)
-    entrypoint = SQLModel.String(null=False)
-    metadata = SQLModel.MediumText()
-    creation_time = SQLModel.DateTime(default=now, readonly=True)
-    prod_entryp_ref = SQLModel.ForeignKey(product_id, netrino_product.id)
-    unique_prod_entryp = SQLModel.UniqueIndex(product_id, entrypoint)
-    primary_key = id
-
-# @Vuader: Todo: Linked products: upsell and cross sell
+    unique_short_id = SQLModel.UniqueIndex(short_id)
+    order_product = SQLModel.ForeignKey(product_id,
+                                        netrino_product.id,
+                                        on_delete='RESTRICT')

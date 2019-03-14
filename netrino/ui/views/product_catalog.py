@@ -32,11 +32,23 @@ from luxon import router
 from luxon import register
 from luxon import render_template
 from luxon.utils.bootstrap4 import form
+from luxon.utils.pkg import EntryPoints
+from luxon.exceptions import FieldMissing
 
 from netrino.ui.models.products import netrino_product
 from netrino.ui.models.products import netrino_custom_attr
 
-g.nav_menu.add('/Orchestration/Products',
+def render_model(element_model, pid, mval, mtype, view, data=None,
+                 ro=False, **kwargs):
+    html_form = form(element_model, data, readonly=ro)
+    return render_template('netrino.ui/products/%s.html' % mtype,
+                           view='%s %s %s' % (view, mval, mtype),
+                           form=html_form,
+                           id=pid,
+                           model=mval,
+                           **kwargs)
+
+g.nav_menu.add('/Infrastructure/Orchestration/Products',
                href='/products',
                tag='products:admin',
                feather='package')
@@ -83,6 +95,36 @@ class Products():
         router.add('POST',
                    '/products/add-image/{pid}',
                    self.add_image,
+                   tag='products:admin')
+
+        router.add(('GET', 'POST',),
+                   '/products/add-service/{pid}',
+                   self.entrypoint,
+                   tag='products:admin')
+
+        router.add('POST',
+                   '/products/services/{pid}/{ep}',
+                   self.add_entrypoint,
+                   tag='products:admin')
+
+        router.add('POST',
+                   '/products/services/edit/{pid}/{ep}',
+                   self.update_entrypoint,
+                   tag='products:admin')
+
+        router.add('GET',
+                   '/products/services/edit/{pid}/{ep}',
+                   self.edit_entrypoint,
+                   tag='products:admin')
+
+        router.add('GET',
+                   '/products/rm-service/{eid}',
+                   self.delete_entrypoint,
+                   tag='products:admin')
+
+        router.add('GET',
+                   '/products/services/{pid}/{ep}',
+                   self.view_entrypoint,
                    tag='products:admin')
 
     def list(self, req, resp):
@@ -146,3 +188,57 @@ class Products():
                                 endpoint='orchestration', data=req.form_dict)
         req.method = 'GET'
         return self.edit(req, resp, pid)
+
+    def entrypoint(self, req, resp, pid):
+        try:
+            ep = req.form_dict['service']
+        except KeyError:
+            raise FieldMissing('Service', 'Product Service',
+                               'Please select Service for Product')
+        model = EntryPoints('netrino.product.tasks')[ep].model
+
+        return render_model(model, pid, ep, 'service', view="Add")
+
+    def add_entrypoint(self, req, resp, pid, ep):
+        req.context.api.execute('POST',
+                                '/v1/product/%s/task/%s' % (pid, ep,),
+                                data=req.form_dict,
+                                endpoint='orchestration')
+        req.method = 'GET'
+
+        return self.edit(req, resp, pid)
+
+    def update_entrypoint(self, req, resp, pid, ep):
+        req.context.api.execute('PUT', '/v1/product/%s/task/%s' % (pid, ep,),
+                                data=req.form_dict)
+        req.method = 'GET'
+        return self.view_entrypoint(req, resp, pid, ep)
+
+    def edit_entrypoint(self, req, resp, pid, ep):
+        p_ep = req.context.api.execute('GET',
+                                        '/v1/product/%s/%s' % (
+                                            pid, ep,),
+                                        data=req.form_dict)
+
+        model = EntryPoints('netrino.product.tasks')[ep].model
+
+        return render_model(model, pid, ep,
+                            'service', view="Edit",
+                            data=p_ep.json['metadata'])
+
+    def view_entrypoint(self, req, resp, pid, ep):
+        p_ep = req.context.api.execute('GET',
+                                        '/v1/product/%s/%s' % (
+                                           pid, ep,))
+
+        model = EntryPoints('netrino.product.tasks')[ep].model
+
+        return render_model(model, pid, ep,
+                            'service', view="View",
+                            data=p_ep.json['metadata'], ro=True)
+
+
+    def delete_entrypoint(self, req, resp, eid):
+        req.context.api.execute('DELETE',
+                                '/v1/products/tasks/%s' % (eid,),
+                                endpoint="orchestration")

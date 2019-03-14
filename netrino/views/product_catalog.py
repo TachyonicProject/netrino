@@ -31,13 +31,17 @@ import base64
 from luxon import register
 from luxon import router
 from luxon import db
+from luxon import g
+from luxon import js
 
 from luxon.exceptions import HTTPNotFound
 from luxon.helpers.api import sql_list, obj, raw_list
+from luxon.utils.pkg import EntryPoints
 
 from netrino.models.products import netrino_product
 from netrino.models.products import netrino_custom_attr
 from netrino.models.products import netrino_categories
+from netrino.models.products import netrino_product_entrypoint
 
 
 @register.resources()
@@ -63,23 +67,49 @@ class Products:
                    self.add_image,
                    tag='products:admin')
         router.add('GET', '/v1/product/{pid}/image',
-               self.image,
-               tag='login')
+               self.image)
+
+        router.add('GET', '/v1/products/tasks',
+                   self.entrypoints,
+                   tag='products:admin')
+
+        router.add('POST', '/v1/product/{pid}/task/{ep}',
+                   self.add_ep,
+                   tag='products:admin')
+        router.add('DELETE', '/v1/products/tasks/{ep}',
+                   self.delete_ep,
+                   tag='products:admin')
 
     def _get_categories(self, pid):
         sql = 'SELECT * FROM netrino_categories WHERE product_id=?'
         with db() as conn:
             return conn.execute(sql, (pid,)).fetchall()
 
+    def _get_services(self, pid):
+        sql = 'SELECT netrino_product_entrypoint.* FROM ' \
+              'netrino_product_entrypoint WHERE product_id=?'
+        with db() as conn:
+            return conn.execute(sql, (pid,)).fetchall()
+
 
     def product(self, req, resp, pid):
+        product = obj(req, netrino_product, sql_id=pid).dict
+        del product['image']
+
+        categories = self._get_categories(pid)
+        services = self._get_services(pid)
+        product['categories'] = categories
+        product['services'] = services
+
         view = req.query_params.get('view', False)
+
         if view:
             if view == 'categories':
-                categories = self._get_categories(pid)
                 return raw_list(req, categories)
+            elif view == 'services':
+                return raw_list(req, services)
 
-        return obj(req, netrino_product, sql_id=pid)
+        return product
 
     def products(self, req, resp):
         return sql_list(req, 'netrino_product', ('id',
@@ -143,3 +173,40 @@ class Products:
         resp.content_type = result['image_type']
         resp.write(base64.b64decode(result['image']))
 
+    def add_ep(self, req, resp, pid, ep):
+        region = g.app.config.get('identity', 'region',
+                                  fallback=req.context_region)
+        metadata_model = EntryPoints('netrino.product.tasks')[
+            ep].model()
+        metadata_model.update(req.json)
+        # Check to see all required data was submittied
+        metadata_model._pre_commit()
+        metadata = metadata_model.dict
+        metadata['region'] = region
+        model = netrino_product_entrypoint()
+        model['product_id'] = pid
+        model['entrypoint'] = ep
+        model['metadata'] = js.dumps(metadata)
+        model.commit()
+        return self.view_ep(req, resp, model['id'])
+
+    def view_ep(self, req, resp, eid):
+        ep = netrino_product_entrypoint()
+        ep.sql_id(eid)
+
+        return ep
+
+    def delete_ep(self, req, resp, ep):
+        nep = obj(req, netrino_product_entrypoint, sql_id=ep)
+        nep.commit()
+
+        return nep
+
+    def entrypoints(self, req, resp):
+        """Lists all tasks registered under the
+                netrino.product.tasks entry point.
+                """
+        eps = []
+        for e in EntryPoints('netrino.product.tasks'):
+            eps.append({'id': e, 'name': e})
+        return raw_list(req, eps)

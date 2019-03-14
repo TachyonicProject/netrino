@@ -1,0 +1,20 @@
+    <form id="sagepay_paynow" method="POST" action="https://paynow.sagepay.co.za/site/paynow.aspx" data-no-ajax> <!---Form POST**--->
+      <input type="hidden" name="m1" value="{{ service_key }}">                                     <!---Pay Now Service Key--->
+      <input type="hidden" name="m2" value="24ade73c-98cf-47b3-99be-cc7b867b3080">                  <!---Software Vendor Key--->
+      <input type="hidden" name="p2" value="{{ transaction_id }}">                                  <!---Unique ID for this / each transaction--->
+      <input type="hidden" name="p3"  value="{{ product_name }} ({{ REQ.credentials.username }})">  <!---Description of goods being purchased--->
+      <input type="hidden" name="p4" value="{{ product_price }}">                                   <!---Amount to be settled / paid--->
+      <input type="hidden" name="Budget" value="N">                                                 <!---Budget facility being offered?--->
+      <input type="hidden" name="m4" value="{{ order_id }}">                                        <!---This is an extra field***--->
+      <input type="hidden" name="m5" value="{{ product_id }}">                                      <!---This is an extra field***--->
+      <input type="hidden" name="m6" value="{{ order_id }}">                                        <!---This is an extra field***--->
+      <div class="form-group">
+        <label for="m9">Email address</label>
+        <input type="text" name="m9" class="form-control">                                          <!---Card holders email address--->
+      </div>
+      <div class="form-group">
+        <label for="m9">Mobile number</label>
+        <input type="text" name="m11" placeholder="0807777777" class="form-control">                <!---Card holders mobile number--->
+      </div>
+      <input type="hidden" name="m10" value="">                                                     <!---Dataset used by shopping carts i.e. OSCommerce--->
+    </form>
