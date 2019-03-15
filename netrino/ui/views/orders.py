@@ -58,6 +58,8 @@ def process_notification(req, type, data):
 
         result = method(req)
 
+        data['price'] = result['product_price']
+
         order = req.context.api.execute('PUT',
                                         'v1/order/' + result['order_id'],
                                         endpoint='orchestration',
@@ -120,7 +122,8 @@ class Orders():
                                           'v1/product/%s' % pid,
                                           endpoint='orchestration').json
 
-        data = {'product_id': pid}
+        data = {'product_id': pid,
+                'price': product['price']}
 
         order = req.context.api.execute('POST',
                                         'v1/order',
