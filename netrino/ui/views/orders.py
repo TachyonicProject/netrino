@@ -45,6 +45,32 @@ def first_payment_gateway(product, oid):
 
     return None
 
+def process_notification(req, type, data):
+    result = {}
+
+    if req.method == 'POST':
+        _pay_gws = EntryPoints('netrino.payment.gateways')
+        _pg_name = [p for p in _pay_gws][0]
+
+        payment_gw = _pay_gws[_pg_name]()
+
+        method = getattr(payment_gw, type)
+
+        result = method(req)
+
+        order = req.context.api.execute('PUT',
+                                        'v1/order/' + result['order_id'],
+                                        endpoint='orchestration',
+                                        data=data).json
+
+        product = req.context.api.execute('GET',
+                                          'v1/product/'
+                                          + order['product_id'],
+                                          endpoint='orchestration').json
+
+        result['product_name'] = product['name']
+
+        return result
 
 @register.resources()
 class Orders():
@@ -76,6 +102,14 @@ class Orders():
         router.add(['GET','POST'],
                    '/order/decline',
                    self.decline)
+
+        router.add(['GET', 'POST'],
+                   '/order/notify',
+                   self.notify)
+
+        router.add(['GET', 'POST'],
+                   '/order/redirect',
+                   self.redirect)
 
     def setup_order(self, req, resp, pid):
         if not req.context_tenant_id:
@@ -117,10 +151,10 @@ class Orders():
         if len(req.form_dict):
             data = {'metadata': req.form_dict}
 
-            req.context.api.execute('PUT',
-                                    'v1/order/' + oid,
-                                    endpoint='orchestration',
-                                    data=data).json
+            order = req.context.api.execute('PUT',
+                                            'v1/order/' + oid,
+                                            endpoint='orchestration',
+                                            data=data).json
 
         # For now just using any payment option available.
         # In the future we'll grab the preferred payment option from
@@ -151,31 +185,12 @@ class Orders():
                                view="Coming Soon")
 
     def success(self, req, resp):
-        result = {}
+        data = {'status': 'completed',
+                'payment_date': now(),
+                'metadata': {'gateway_data': req.form_dict}}
 
-        if req.method == 'POST':
-            _pay_gws = EntryPoints('netrino.payment.gateways')
-            _pg_name = [p for p in _pay_gws][0]
-
-            payment_gw = _pay_gws[_pg_name]()
-
-            result = payment_gw.success(req)
-
-            data = {'status': 'completed',
-                    'payment_date': now()}
-
-            order = req.context.api.execute('PUT',
-                                    'v1/order/' + result['order_id'],
-                                    endpoint='orchestration',
-                                    data=data).json
-
-            product = req.context.api.execute('GET',
-                                              'v1/product/'
-                                              + order['product_id'],
-                                              endpoint='orchestration').json
-
-            result['product_name'] = product['name']
-            result['payment_date'] = data['payment_date']
+        result = process_notification(req, 'success', data)
+        result['payment_date'] = data['payment_date']
 
         return render_template('netrino.ui/orders/success.html',
                                view="Order Received",
@@ -183,27 +198,39 @@ class Orders():
 
 
     def decline(self, req, resp):
-        result = {}
+        data = {'status': 'declined',
+                'metadata': {'gateway_data': req.form_dict}}
 
-        if req.method == 'POST':
-            _pay_gws = EntryPoints('netrino.payment.gateways')
-            _pg_name = [p for p in _pay_gws][0]
-
-            payment_gw = _pay_gws[_pg_name]()
-
-            order_field = payment_gw.order_field
-
-            result = req.form_dict
-
-            order_id = result[order_field]
-
-            data = {'status': 'declined'}
-            data['metadata'] = {'failure_reason': result}
-
-            req.context.api.execute('PUT',
-                                    'v1/order/' + order_id,
-                                    endpoint='orchestration',
-                                    data=data).json
+        result = process_notification(req, 'decline', data)
 
         return render_template('netrino.ui/orders/decline.html',
-                               view="Order Received", result=result)
+                               view="Payment Failed", result=result)
+
+    def notify(self, req, resp):
+        data = {'status': 'completed',
+                'payment_date': now(),
+                'metadata': {'gateway_data': req.form_dict}}
+
+        result = process_notification(req, 'notify', data)
+
+        result['payment_date'] = data['payment_date']
+
+        return render_template('netrino.ui/orders/notify.html',
+                               view="Notification Received", result=result)
+
+    def redirect(self, req, resp):
+        purchase_date = now()
+
+        metadata = {'gateway_data': req.form_dict,
+                    'purchase_date': purchase_date}
+
+        data = {'status': 'awaiting payment',
+                'metadata': metadata}
+
+        result = process_notification(req, 'redirect', data)
+
+        result['purchase_date'] = purchase_date
+
+        return render_template('netrino.ui/orders/redirect.html',
+                               view="Order Received",
+                               **result)

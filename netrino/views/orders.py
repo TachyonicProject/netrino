@@ -36,6 +36,10 @@ from luxon import g
 
 from luxon.utils.pkg import EntryPoints
 from luxon.helpers.api import raw_list, sql_list, obj, search_params
+from luxon.utils.unique import string_id
+
+from luxon.exceptions import ValidationError
+from luxon.exceptions import HTTPConflict
 
 from netrino.models.orders import netrino_order
 
@@ -78,8 +82,15 @@ class Orders:
                         ('id', 'product_id',))
 
     def create(self, req, resp):
+
         order = obj(req, netrino_order)
-        order.commit()
+        order.update({'short_id': string_id(25)})
+        try:
+            order.commit()
+        except ValidationError:
+            raise HTTPConflict(title="Duplicate Order",
+                               description="Please retry this request")
+
 
         return order
 
