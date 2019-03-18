@@ -48,14 +48,14 @@ class Orders:
     def __init__(self):
         router.add('GET', '/v1/orders', self.list,
                    tag='customer')
-        router.add('GET', '/v1/order/{oid}', self.view)
-                   #tag='customer')
+        router.add('GET', '/v1/order/{oid}', self.view,
+                   tag='customer')
         router.add('POST', '/v1/order', self.create,
                    tag='customer')
-        router.add(['PUT', 'PATCH'], '/v1/order/{oid}', self.update)
-                   #tag='customer')
-        router.add('POST', '/v1/activate/product/{oid}', self.activate)
-                   # tag='customer')
+        router.add(['PUT', 'PATCH'], '/v1/order/{oid}', self.update,
+                   tag='customer')
+        router.add('POST', '/v1/activate/product/{oid}', self.activate,
+                   tag='services:admin')
 
     def _get_service(self, oid):
         sql_order = 'SELECT product_id FROM netrino_order WHERE id=?'
@@ -145,7 +145,8 @@ class Orders:
         result = {'reason': 'Nothing to do, no "netrino.product.tasks" '
                             'entrypoint found'}
         if ep:
-            ep_obj = EntryPoints('netrino.product.tasks')[ep](req, metadata, oid)
+            ep = EntryPoints('netrino.product.tasks')[ep]
+            ep_obj = ep(req, metadata, oid)
             result = ep_obj.deploy()
 
         return result

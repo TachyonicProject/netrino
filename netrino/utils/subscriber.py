@@ -1,6 +1,7 @@
 from luxon import g
 from luxon import js
 
+
 def sub_from_tenant(tenant_id, region):
     url = '/v1/subscribers'
     api = g.current_request.context.api
@@ -14,7 +15,11 @@ def sub_from_tenant(tenant_id, region):
 
     return subscriber['payload'][0]['id']
 
-def sub_from_order(order_id, region):
+
+def sub_from_order(order_id, metadata):
+    region = metadata['region']
+    package_id = metadata['package']
+
     url = '/v1/order/' + order_id
     api = g.current_request.context.api
 
@@ -22,7 +27,15 @@ def sub_from_order(order_id, region):
                           g.current_request.context_interface)
 
     order = api.execute('GET',
-                             url,
-                             endpoint='orchestration').json
+                        url,
+                        endpoint='orchestration').json
 
-    return js.loads(order['metadata'])['subscriber']
+    order_metadata = js.loads(order['metadata'])
+
+    subscriber = order_metadata['subscriber']
+
+    pkg = api.execute('GET',
+                      'v1/package/' + package_id,
+                      endpoint='subscriber').json
+
+    return subscriber, pkg

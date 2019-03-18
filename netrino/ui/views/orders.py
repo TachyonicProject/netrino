@@ -30,7 +30,6 @@
 from luxon import router
 from luxon import register
 from luxon import render_template
-from luxon import js
 from luxon.utils.pkg import EntryPoints
 from luxon.utils.bootstrap4 import form
 from luxon.utils.timezone import now
@@ -58,6 +57,8 @@ def process_notification(req, type, data):
 
         result = method(req)
 
+        data['price'] = result['product_price']
+
         order = req.context.api.execute('PUT',
                                         'v1/order/' + result['order_id'],
                                         endpoint='orchestration',
@@ -70,7 +71,7 @@ def process_notification(req, type, data):
 
         result['product_name'] = product['name']
 
-        return result
+    return result
 
 @register.resources()
 class Orders():
@@ -95,7 +96,7 @@ class Orders():
                    self.orders,
                    tag='customer')
 
-        router.add(['GET','POST'],
+        router.add('POST',
                    '/order/success',
                    self.success)
 
@@ -120,7 +121,8 @@ class Orders():
                                           'v1/product/%s' % pid,
                                           endpoint='orchestration').json
 
-        data = {'product_id': pid}
+        data = {'product_id': pid,
+                'price': product['price']}
 
         order = req.context.api.execute('POST',
                                         'v1/order',
