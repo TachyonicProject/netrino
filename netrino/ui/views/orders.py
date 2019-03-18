@@ -30,7 +30,6 @@
 from luxon import router
 from luxon import register
 from luxon import render_template
-from luxon import js
 from luxon.utils.pkg import EntryPoints
 from luxon.utils.bootstrap4 import form
 from luxon.utils.timezone import now
@@ -72,7 +71,7 @@ def process_notification(req, type, data):
 
         result['product_name'] = product['name']
 
-        return result
+    return result
 
 @register.resources()
 class Orders():
@@ -97,7 +96,7 @@ class Orders():
                    self.orders,
                    tag='customer')
 
-        router.add(['GET','POST'],
+        router.add('POST',
                    '/order/success',
                    self.success)
 
