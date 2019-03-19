@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Frans Rademan.
+# Copyright (c) 2018 Dave Kruger.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,15 +27,28 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-from luxon import g
-
-import netrino.models
-
-import luxon.resources.wsgi.index
+from uuid import uuid4
 
 from luxon import register
-from psychokinetic.middleware.client import Client
+from luxon import Model
+from luxon.utils.timezone import now
 
-register.middleware(Client)
 
-import netrino.views
+@register.model()
+class netrino_product(Model):
+    id = Model.Uuid(default=uuid4, internal=True)
+    name = Model.String(null=False)
+    parent_id = Model.Uuid(hidden=True)
+    price = Model.Integer(default=0)
+    monthly = Model.Boolean()
+    description = Model.LongText()
+    domain = Model.Fqdn(internal=True)
+    creation_time = Model.DateTime(default=now, internal=True)
+
+@register.model()
+class netrino_custom_attr(Model):
+    id = Model.Uuid(default=uuid4, internal=True)
+    name = Model.String(null=False)
+    value = Model.String()
+    visible = Model.Boolean(default=True)
+    product_id = Model.Uuid(internal=True)

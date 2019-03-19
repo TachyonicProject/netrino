@@ -1,0 +1,22 @@
+{% extends "photonic/view.html" %}
+{% block content %}
+    Unfortunately your payment was declined.
+
+    <div style="padding: 10px"></div>
+
+    <h1>Details</h1>
+    {% for k in result %}
+    <div class="row">
+        <div class="col col-sm-3">
+            <b>{{ k }}</b>
+        </div>
+        <div class="col col-sm-9">
+            {{ result[k] }}
+        </div>
+    </div>
+    {% endfor %}
+{% endblock %}
+
+{% block buttons %}
+    <a href="#" onclick="close_window();" class="btn btn-default">Back</a>
+{% endblock %}

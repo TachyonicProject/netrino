@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Frans Rademan.
+# Copyright (c) 2019 Dave Kruger.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,15 +27,29 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-from luxon import g
-
-import netrino.models
-
-import luxon.resources.wsgi.index
+from uuid import uuid4
 
 from luxon import register
-from psychokinetic.middleware.client import Client
+from luxon import SQLModel
+from luxon.utils.timezone import now
 
-register.middleware(Client)
+from netrino.models.products import netrino_product
 
-import netrino.views
+
+@register.model()
+class netrino_order(SQLModel):
+    id = SQLModel.Uuid(default=uuid4, internal=True)
+    short_id = SQLModel.String()
+    product_id = SQLModel.Uuid(null=False)
+    domain = SQLModel.Fqdn(internal=True)
+    tenant_id = SQLModel.Uuid()
+    metadata = SQLModel.MediumText()
+    price = SQLModel.Decimal(6, 2, default=0)
+    status = SQLModel.String(default="created")
+    payment_date = SQLModel.DateTime()
+    creation_time = SQLModel.DateTime(default=now, internal=True)
+    primary_key = id
+    unique_short_id = SQLModel.UniqueIndex(short_id)
+    order_product = SQLModel.ForeignKey(product_id,
+                                        netrino_product.id,
+                                        on_delete='RESTRICT')

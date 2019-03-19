@@ -1,5 +1,3 @@
-#from netrino.views import interface
-#from netrino.views import yang
-#from netrino.views import resources
-#from netrino.views import openstack_proxy
-from netrino.views import process
+import netrino.views.process
+import netrino.views.product_catalog
+import netrino.views.orders

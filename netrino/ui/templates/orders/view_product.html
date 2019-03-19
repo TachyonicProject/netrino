@@ -1,0 +1,46 @@
+{% extends "photonic/view.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-sm-6 offset-md-3">
+        <img src="{{APP}}/apiproxy?url=/v1/product/{{id}}/image&endpoint=orchestration" alt="Product Image" style="max-width:100px;max-height:100px;display:block;margin-left:auto;margin-right:auto">
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-6 offset-md-3" style="text-align: center">
+        <h2>{{ product['name'] }}</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-6 offset-md-3" style="text-align: center">
+        <p>&nbsp;</p>
+        {{ product['description'] if product['description']}}
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-6 offset-md-3" style="text-align: center">
+        <p>&nbsp;</p>
+        R {{ product['price'] }}
+        {% if product.monthly %}
+              per month
+        {%  endif %}
+    </div>
+</div>
+
+<div class="row">
+&nbsp;
+</div>
+
+{%  if payment_gw %}
+    {{ payment_gw.form }}
+{%  endif %}
+
+{% endblock %}
+
+{% block buttons %}
+    <a href="#" onclick="close_window();" class="btn btn-default">Back</a>
+    {%  if payment_gw %}
+        <a href="#" data-form="{{ payment_gw.name }}" class="btn btn-primary" data-close>Buy</a>
+    {%  else %}
+        <a href="{{ APP }}/order/{{ order_id }}/success" class="btn btn-primary">Activate</a>
+    {%  endif %}
+{% endblock %}
