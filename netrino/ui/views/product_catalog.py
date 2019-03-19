@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Dave Kruger.
+# Copyright (c) 2018-2019 Dave Kruger.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@ from luxon.exceptions import FieldMissing
 from netrino.ui.models.products import netrino_product
 from netrino.ui.models.products import netrino_custom_attr
 
+
 def render_model(element_model, pid, mval, mtype, view, data=None,
                  ro=False, **kwargs):
     html_form = form(element_model, data, readonly=ro)
@@ -48,7 +49,8 @@ def render_model(element_model, pid, mval, mtype, view, data=None,
                            model=mval,
                            **kwargs)
 
-g.nav_menu.add('/Infrastructure/Orchestration/Products',
+
+g.nav_menu.add('/Infrastructure/Orchestration/Product Catalog',
                href='/products',
                tag='products:admin',
                feather='package')

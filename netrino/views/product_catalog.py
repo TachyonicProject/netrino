@@ -34,7 +34,6 @@ from luxon import db
 from luxon import g
 from luxon import js
 
-from luxon.exceptions import HTTPNotFound
 from luxon.helpers.api import sql_list, obj, raw_list
 from luxon.utils.pkg import EntryPoints
 
@@ -50,6 +49,8 @@ class Products:
         router.add('GET', '/v1/product/{pid}', self.product,
                    tag='products:view')
         router.add('GET', '/v1/products', self.products,
+                   tag='login')
+        router.add('GET', '/v1/products/categories', self.categories,
                    tag='login')
         router.add('POST', '/v1/product', self.create,
                    tag='products:view')
@@ -68,7 +69,6 @@ class Products:
                    tag='products:admin')
         router.add('GET', '/v1/product/{pid}/image',
                self.image)
-
         router.add('GET', '/v1/products/tasks',
                    self.entrypoints,
                    tag='products:admin')
@@ -91,7 +91,6 @@ class Products:
         with db() as conn:
             return conn.execute(sql, (pid,)).fetchall()
 
-
     def product(self, req, resp, pid):
         product = obj(req, netrino_product, sql_id=pid).dict
         del product['image']
@@ -113,13 +112,19 @@ class Products:
 
     def products(self, req, resp):
         return sql_list(req, 'netrino_product', ('id',
-                                                  'name',
-                                                  'parent_id',
-                                                  'price',
-                                                  'monthly',
-                                                  'description',
-                                                  'creation_time')
+                                                 'name',
+                                                 'parent_id',
+                                                 'price',
+                                                 'monthly',
+                                                 'description',
+                                                 'creation_time')
                         )
+
+    def categories(self, req, resp):
+        sql = 'SELECT DISTINCT(name) FROM netrino_categories'
+        with db()as conn:
+            categories = conn.execute(sql).fetchall()
+        return raw_list(req, categories)
 
     def create(self, req, resp):
         product = obj(req, netrino_product)

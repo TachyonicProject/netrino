@@ -36,15 +36,6 @@ import luxon.resources.wsgi.index
 from luxon import register
 from psychokinetic.middleware.client import Client
 
-def tenant_name(req):
-    if req.credentials.authenticated and req.context_tenant_id:
-        response = req.context.api.execute('get',
-                                           '/v1/tenant/%s' % req.context_tenant_id)
-        return response.json['name']
-    return None
-
-g.tenant_name = tenant_name
-
 register.middleware(Client)
 
 import netrino.views
