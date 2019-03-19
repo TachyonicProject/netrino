@@ -1,0 +1,47 @@
+{% extends "photonic/view.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-sm-6 offset-md-3">
+        <img src="{{APP}}/apiproxy?url=/v1/product/{{product.id}}/image&endpoint=orchestration" alt="Product Image" style="max-width:100px;max-height:100px;display:block;margin-left:auto;margin-right:auto">
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-6 offset-md-3" style="text-align: center">
+        <h2>{{ product['name'] }}</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-6 offset-md-3" style="text-align: center">
+        <p>&nbsp;</p>
+        {{ product['description'] if product['description']}}
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-6 offset-md-3" style="text-align: center">
+        <p>&nbsp;</p>
+        R {{ product['price'] }}
+        {% if product.monthly %}
+              per month
+        {%  endif %}
+    </div>
+</div>
+
+<div class="row">
+&nbsp;
+</div>
+
+{% if form %}
+<form id="customize_order" method="post" enctype="multipart/form-data">
+{{ form }}
+{%  endif %}
+
+{% endblock %}
+
+{% block buttons %}
+    <a href="#" onclick="close_window();" class="btn btn-default">Back</a>
+    {%  if form %}
+        <a href="{{ APP }}/order/{{ product.id }}/{{ order_id }}" data-form="customize_order" class="btn btn-primary">Order</a>
+    {%  else %}
+        <a href="{{ APP }}/order/{{ pid }}/success" class="btn btn-primary">Activate</a>
+    {%  endif %}
+{% endblock %}
