@@ -1,0 +1,212 @@
+<mxEditor defaultGroup="group" defaultEdge="edge"
+    forcedInserting="0"
+    swimlaneRequired="0">
+    <ui>
+        <resource basename="{{STATIC}}/netrino.ui/workflow/resources/app"/>
+		<add as="toolbar" x="50" y="40" width="100" style="padding:5px;padding-top:8px;padding-right:0px;"/>
+	</ui>
+	<mxDefaultKeyHandler as="keyHandler">
+		<add as="46" action="delete"/>
+		<add as="90" control="1" action="undo"/>
+		<add as="89" control="1" action="redo"/>
+		<add as="113" action="edit"/>		
+		<add as="107" action="zoomIn"/>
+		<add as="109" action="zoomOut"/>
+	</mxDefaultKeyHandler>
+	<mxDefaultPopupMenu as="popupHandler">
+		<add as="delete" action="delete" icon="{{STATIC}}/netrino.ui/workflow/images/delete.gif" if="cell"/>
+        <add as="properties" action="properties" icon="{{STATIC}}/netrino.ui/workflow/images/properties.gif" if="cell"/>
+	</mxDefaultPopupMenu>
+	<Array as="templates">
+		<add as="edge">
+			<Edge label="" description="">
+				<mxCell edge="1">
+					<mxGeometry as="geometry" relative="1"/>
+				</mxCell>
+			</Edge>
+		</add>
+		<add as="swimlane">
+			<Swimlane label="Swimlane" description="" href="">
+				<mxCell vertex="1" style="swimlane" connectable="0">
+					<mxGeometry as="geometry" width="300" height="160"/>
+				</mxCell>
+			</Swimlane>
+		</add>
+		<add as="task">
+			<Task label="Task" description="" href="">
+				<mxCell vertex="1" connectable="1">	
+					<mxGeometry as="geometry" width="72" height="32"/>
+				</mxCell>
+			</Task>
+		</add>
+		<add as="event">
+			<Event label="Start Event" description="" href="">
+				<mxCell vertex="1" style="symbol;image={{STATIC}}/netrino.ui/workflow/images/symbols/event.png">		
+					<mxGeometry as="geometry" width="32" height="32"/>
+				</mxCell>
+			</Event>
+		</add>
+		<add as="eventend">
+			<EventEnd label="End Event" description="" href="">
+				<mxCell vertex="1" style="symbol;image={{STATIC}}/netrino.ui/workflow/images/symbols/event.png">		
+					<mxGeometry as="geometry" width="32" height="32"/>
+				</mxCell>
+			</EventEnd>
+		</add>
+		<add as="fork">
+			<Fork label="Fork" description="" href="">
+				<mxCell vertex="1" style="symbol;image={{STATIC}}/netrino.ui/workflow/images/symbols/fork.png">		
+					<mxGeometry as="geometry" width="32" height="32"/>
+				</mxCell>
+			</Fork>
+		</add>
+		<add as="merge">
+			<Merge label="Merge" description="" href="">
+				<mxCell vertex="1" style="symbol;image={{STATIC}}/netrino.ui/workflow/images/symbols/merge.png">		
+					<mxGeometry as="geometry" width="32" height="32"/>
+				</mxCell>
+			</Merge>
+		</add>
+	</Array>
+    <mxDefaultToolbar as="toolbar">
+        <add as="select" mode="select" icon="{{STATIC}}/netrino.ui/workflow/images/select.gif"/>
+        <add as="pan" mode="pan" icon="{{STATIC}}/netrino.ui/workflow/images/pan.gif"/>
+        <add as="connect" mode="connect" icon="{{STATIC}}/netrino.ui/workflow/images/connect.gif"/>
+        <br/><hr/>
+        <add as="undo" action="undo" icon="{{STATIC}}/netrino.ui/workflow/images/undo.gif"/>
+        <add as="redo" action="redo" icon="{{STATIC}}/netrino.ui/workflow/images/redo.gif"/>
+        <add as="delete" action="delete" icon="{{STATIC}}/netrino.ui/workflow/images/delete.gif"/>
+        <br/><hr/>
+        <add as="Swimlane" template="swimlane" icon="{{STATIC}}/netrino.ui/workflow/images/swimlane.gif"/>
+        <add as="Task" template="task" icon="{{STATIC}}/netrino.ui/workflow/images/rectangle.gif"/>
+        <add as="Start Event" template="event" style="symbol;image={{STATIC}}/netrino.ui/workflow/images/symbols/event.png" icon="{{STATIC}}/netrino.ui/workflow/images/symbols/small_event.gif"/>
+        <add as="End Event" template="eventend" style="symbol;image={{STATIC}}/netrino.ui/workflow/images/symbols/event_end.png" icon="{{STATIC}}/netrino.ui/workflow/images/symbols/small_event_end.gif"/>
+        <add as="Fork" template="fork" style="symbol;image={{STATIC}}/netrino.ui/workflow/images/symbols/fork.png" icon="{{STATIC}}/netrino.ui/workflow/images/symbols/small_fork.gif"/>
+        <add as="Merge" template="merge" style="symbol;image={{STATIC}}/netrino.ui/workflow/images/symbols/merge.png" icon="{{STATIC}}/netrino.ui/workflow/images/symbols/small_merge.gif"/>
+        <br/><hr/>
+        <add as="fit" action="fit" icon="{{STATIC}}/netrino.ui/workflow/images/zoom.gif"/>
+        <add as="zoomIn" action="zoomIn" icon="{{STATIC}}/netrino.ui/workflow/images/zoomin.gif"/>
+        <add as="zoomOut" action="zoomOut" icon="{{STATIC}}/netrino.ui/workflow/images/zoomout.gif"/>
+        <add as="actualSize" action="actualSize" icon="{{STATIC}}/netrino.ui/workflow/images/zoomactual.gif"/>
+    </mxDefaultToolbar>
+    <Array as="cycleAttributeValues">
+        <add value="#c4e0ee"/>
+        <add value="#c09ad5"/>
+        <add value="#9bdf92"/>
+        <add value="#dfa992"/>
+        <add value="#dadf92"/>
+        <add value="#f6c353"/>
+    </Array>
+	<mxGraph as="graph" dropEnabled="1">
+        <add as="isAutoSizeCell"><![CDATA[
+            function(cell)
+            {
+                return false;
+            }
+        ]]></add>
+        <add as="isSwimlane"><![CDATA[
+            function (cell)
+            {
+                return mxUtils.isNode(this.model.getValue(cell), 'swimlane');
+            }
+        ]]></add>
+        <add as="isAllowOverlapParent"><![CDATA[
+            function(cell)
+            {
+                return !this.isSwimlane(cell.parent);
+            }
+        ]]></add>
+        <add as="getTooltipForCell"><![CDATA[
+            function(cell)
+            {
+                return '<B>ID:</B> ' + cell.getId();
+            }
+        ]]></add>
+        <add as="convertValueToString">
+            function(cell)
+            {
+                return cell.getAttribute('label');
+            }
+        </add>
+        <mxGraphModel as="model">
+            <add as="valueForCellChanged"><![CDATA[
+                function(cell, value)
+                {
+                    var previous = null;
+                    
+                    if (isNaN(value.nodeType))
+                    {
+                        previous = cell.getAttribute('label');
+                        cell.setAttribute('label', value);
+                    }
+                    else
+                    {
+                        previous = cell.value;
+                        cell.value = value;
+                    }
+                    
+                    return previous;
+                }
+            ]]></add>
+        </mxGraphModel>
+        <mxStylesheet as="stylesheet">
+            <add as="defaultVertex">
+                <add as="shape" value="label"/>
+                <add as="perimeter" value="rectanglePerimeter"/>
+                <add as="labelBackgroundColor" value="#aaebe5"/>
+                <add as="fontSize" value="11"/>
+                <add as="fontStyle" value="1"/>
+                <add as="align" value="center"/>
+                <add as="verticalAlign" value="middle"/>
+                <add as="strokeColor" value="#4d5e67"/>
+                <add as="fillColor" value="#aaebe5"/>
+                <add as="rounded" value="1"/>
+                <add as="overflow" value="hidden"/>
+            </add>
+            <add as="defaultEdge">
+                <add as="shape" value="connector"/>
+                <add as="labelBackgroundColor" value="none"/>
+                <add as="rounded" value="1"/>
+                <add as="edgeStyle" value="elbowEdgeStyle"/>
+                <add as="endArrow" value="classic"/>
+                <add as="fontSize" value="11"/>
+                <add as="align" value="center"/>
+                <add as="verticalAlign" value="middle"/>
+                <add as="strokeColor" value="#2e7dab"/>
+            </add>
+            <add as="swimlane">
+                <add as="swimlaneFillColor" value="#e6e6e6"/>
+                <add as="shape" value="swimlane"/>
+                <add as="fontSize" value="12"/>
+                <add as="startSize" value="23"/>
+                <add as="horizontal" value="0"/>
+                <add as="verticalAlign" value="top"/>
+                <add as="fontColor" value="black"/>
+                <add as="autosize" value="0"/>
+                <add as="foldable" value="0"/>
+                <add as="fillOpacity" value="50"/>
+                <add as="labelBackgroundColor" value="none"/>
+                <add as="overflow" value="hidden"/>
+            </add>
+            <add as="symbol">
+                <add as="shape" value="image"/>
+                <add as="perimeter" value="rectanglePerimeter"/>
+                <add as="labelBackgroundColor" value="none"/>
+                <add as="fontSize" value="11"/>
+                <add as="align" value="center"/>
+                <add as="verticalAlign" value="top"/>
+                <add as="verticalLabelPosition" value="bottom"/>
+                <add as="overflow" value="visible"/>
+            </add>
+        </mxStylesheet>
+	</mxGraph>
+	<Array as="actions">
+		<add as="properties"><![CDATA[
+			function (editor, cell)
+            {
+                url = "{{APP}}/infrastructure/orchestration/process/{{process_id}}/graph/" + cell.id;
+                tachyon.ajaxQuery('get', url, tachyon.load_modal);
+			}
+		]]></add>
+	</Array>
+</mxEditor>

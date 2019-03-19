@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Frans Rademan, David Kruger.
+# Copyright (c) 2018-2019 Christiaan Frans Rademan.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,29 +31,32 @@ from uuid import uuid4
 
 from luxon import register
 from luxon import SQLModel
-from luxon.utils.timezone import now
 
+from netrino.models.processes import netrino_process
 
-from luxon.utils.timezone import now
 
 @register.model()
-class netrino_resource_map(SQLModel):
+class netrino_workflow(SQLModel):
     id = SQLModel.Uuid(default=uuid4, internal=True)
-    yang_typedef = SQLModel.Text()
-    map_type = SQLModel.Enum('resource_pool', 'netrino_mapper', null=False)
-    resource_type = SQLModel.Text(null=True)
-    value = SQLModel.Text()
-    creation_time = SQLModel.DateTime(default=now, readonly=True)
+    workflow_id = SQLModel.Uuid()
+    node_id = SQLModel.Integer(signed=False, null=True)
+    node_type = SQLModel.String()
+    node_parent = SQLModel.Integer(signed=False, null=True)
+    node_label = SQLModel.String()
+    node_description = SQLModel.String()
+    node_style = SQLModel.String()
+    node_x = SQLModel.Integer(null=True)
+    node_y = SQLModel.Integer(null=True)
+    node_width = SQLModel.Integer(null=True)
+    node_height = SQLModel.Integer(null=True)
+    node_source = SQLModel.Integer(null=True)
+    node_target = SQLModel.Integer(null=True)
+    node_link_target_x = SQLModel.Integer(null=True)
+    node_link_target_y = SQLModel.Integer(null=True)
+    node_link_source_x = SQLModel.Integer(null=True)
+    node_link_source_y = SQLModel.Integer(null=True)
+    node_removed = SQLModel.Boolean(default=False)
+    entry_point = SQLModel.String()
+    metadata = SQLModel.MediumText(null=True)
+    workflow_ref = SQLModel.ForeignKey(workflow_id, netrino_process.id)
     primary_key = id
-
-@register.model()
-class netrino_custom_resource(SQLModel):
-    id = SQLModel.Uuid(default=uuid4, internal=True)
-    type = SQLModel.String(null=False)
-    name = SQLModel.String(null=False)
-    value = SQLModel.String()
-    domain = SQLModel.Fqdn(internal=True)
-    tenant_id = SQLModel.Uuid(internal=True)
-    primary_key = id
-    creation_time = SQLModel.DateTime(default=now, readonly=True)
-    resource_index = SQLModel.Index(type,domain,tenant_id)

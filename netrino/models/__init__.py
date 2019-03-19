@@ -1,1 +1,2 @@
-from netrino.models import resources
+from netrino.models import processes
+from netrino.models import workflows

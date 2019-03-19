@@ -1,0 +1,5 @@
+{% extends "photonic/view.html" %}
+{% block content %}
+    <div data-graph="{{APP}}/mxgraph/netrino.ui/process/workfloweditor.xml/{{process_id}}/1" data-url="{{APP}}/apiproxy?url=/workflow/{{process_id}}&endpoint=orchestration" class="mxgraphbase">
+    </div>
+{% endblock %}
