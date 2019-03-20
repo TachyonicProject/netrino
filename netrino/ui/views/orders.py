@@ -122,7 +122,8 @@ class Orders():
                                           endpoint='orchestration').json
 
         data = {'product_id': pid,
-                'price': product['price']}
+                'price': product['price'],
+                'user_id': req.credentials.user_id}
 
         order = req.context.api.execute('POST',
                                         'v1/order',
@@ -184,7 +185,7 @@ class Orders():
 
     def orders(self, req, resp):
         return render_template('netrino.ui/orders/my_orders.html',
-                               view="Coming Soon")
+                               view="My Orders")
 
     def success(self, req, resp):
         data = {'status': 'completed',

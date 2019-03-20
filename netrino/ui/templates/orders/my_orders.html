@@ -1,6 +1,16 @@
 {% extends "photonic/view.html" %}
 {% block content %}
-
+<table class="display" data-endpoint='orchestration' data-url="/v1/orders" width="100%">
+    <thead>
+        <tr>
+            <th id='product_name'>Product</th>
+            <th id='creation_time'>Date</th>
+            <th data-href="/orders/" data-modal width="2rem">
+                <span data-feather="view"></span>
+            </th>
+        </tr>
+    </thead>
+</table>
 {% endblock %}
 
 {% block buttons %}
