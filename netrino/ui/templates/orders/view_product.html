@@ -39,8 +39,8 @@
 {% block buttons %}
     <a href="#" onclick="close_window();" class="btn btn-default">Back</a>
     {%  if payment_gw %}
-        <a href="#" data-form="{{ payment_gw.name }}" class="btn btn-primary" data-close>Buy</a>
+        <a href="#" data-form="{{ payment_gw.name }}" class="btn btn-primary" data-close-window>Buy</a>
     {%  else %}
-        <a href="{{ APP }}/order/{{ order_id }}/success" class="btn btn-primary">Activate</a>
+        <a href="{{ APP }}/order/{{ order_id }}/success" class="btn btn-primary" data-close-window>Activate</a>
     {%  endif %}
 {% endblock %}
