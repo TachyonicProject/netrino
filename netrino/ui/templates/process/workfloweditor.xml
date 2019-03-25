@@ -7,8 +7,8 @@
 	</ui>
 	<mxDefaultKeyHandler as="keyHandler">
 		<add as="46" action="delete"/>
-		<add as="90" control="1" action="undo"/>
-		<add as="89" control="1" action="redo"/>
+        <add as="90" control="1" action="undo"/>
+        <add as="89" control="1" action="redo"/>
 		<add as="113" action="edit"/>		
 		<add as="107" action="zoomIn"/>
 		<add as="109" action="zoomOut"/>
@@ -204,8 +204,8 @@
 		<add as="properties"><![CDATA[
 			function (editor, cell)
             {
-                url = "{{APP}}/infrastructure/orchestration/process/{{process_id}}/graph/" + cell.id;
-                tachyon.ajaxQuery('get', url, tachyon.load_modal);
+                url = "{{APP}}/infrastructure/orchestration/process/{{id}}/" + cell.id;
+                tachyonDom.ajaxQuery('get', url, tachyonWindows.loadModal);
 			}
 		]]></add>
 	</Array>
