@@ -27,6 +27,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
+from luxon import g
 from luxon import router
 from luxon import register
 from luxon import render_template
@@ -34,8 +35,13 @@ from luxon.utils.pkg import EntryPoints
 from luxon.utils.bootstrap4 import form
 from luxon.utils.timezone import now
 
-
 from luxon.exceptions import FieldMissing
+
+g.nav_menu.add('/Billing/My Orders',
+               href='/orders',
+               tag='customer',
+               endpoint='orchestration',
+               feather='package')
 
 def first_payment_gateway(product, oid):
     _pay_gws = EntryPoints('netrino.payment.gateways')
@@ -43,6 +49,7 @@ def first_payment_gateway(product, oid):
         return _pay_gws[p](product, oid)
 
     return None
+
 
 def process_notification(req, type, data):
     result = {}
@@ -73,6 +80,7 @@ def process_notification(req, type, data):
 
     return result
 
+
 @register.resources()
 class Orders():
     def __init__(self):
@@ -96,11 +104,16 @@ class Orders():
                    self.orders,
                    tag='customer')
 
-        router.add('POST',
+        router.add('GET',
+                   '/orders/{oid}',
+                   self.view_order,
+                   tag='customer')
+
+        router.add(('GET', 'POST',),
                    '/order/success',
                    self.success)
 
-        router.add(['GET','POST'],
+        router.add(['GET', 'POST'],
                    '/order/decline',
                    self.decline)
 
@@ -130,14 +143,12 @@ class Orders():
                                         endpoint='orchestration',
                                         data=data).json
 
-
         if len(product['services']):
             ep_name = product['services'][0]['entrypoint']
             _ep = EntryPoints('netrino.product.tasks')[ep_name]
             setup_form = form(_ep.prepare, {})
         else:
             return self.order_product(req, resp, pid, order['id'])
-
 
         return render_template('netrino.ui/orders/prepare_order.html',
                                view=product['name'],
@@ -149,7 +160,6 @@ class Orders():
         product = req.context.api.execute('GET',
                                           'v1/product/' + pid,
                                           endpoint='orchestration').json
-
 
         if len(req.form_dict):
             data = {'metadata': req.form_dict}
@@ -187,18 +197,41 @@ class Orders():
         return render_template('netrino.ui/orders/my_orders.html',
                                view="My Orders")
 
+    def view_order(self, req, resp, oid):
+        order = req.context.api.execute('GET',
+                                        'v1/order/' + oid,
+                                        endpoint='orchestration').json
+        product = req.context.api.execute('GET',
+                                          'v1/product/' + order['product_id'],
+                                          endpoint='orchestration').json
+
+        payment_gw = first_payment_gateway(product, oid)
+
+        additional = None
+
+        if hasattr(payment_gw, 'order_info'):
+            additional = payment_gw.order_info(req, order)
+
+        return render_template('netrino.ui/orders/view_order.html',
+                               view="View Order",
+                               order=order,
+                               product=product,
+                               additional=additional)
+
     def success(self, req, resp):
-        data = {'status': 'completed',
-                'payment_date': now(),
-                'metadata': {'gateway_data': req.form_dict}}
+        if req.method == 'GET':
+            return self.orders(req, resp)
+        elif req.method == 'POST':
+            data = {'status': 'payment received',
+                    'payment_date': now(),
+                    'metadata': {'gateway_data': req.form_dict}}
 
-        result = process_notification(req, 'success', data)
-        result['payment_date'] = data['payment_date']
+            result = process_notification(req, 'success', data)
+            result['payment_date'] = data['payment_date']
 
-        return render_template('netrino.ui/orders/success.html',
-                               view="Order Received",
-                               **result)
-
+            return render_template('netrino.ui/orders/success.html',
+                                   view="Order Received",
+                                   **result)
 
     def decline(self, req, resp):
         data = {'status': 'declined',

@@ -1,0 +1,56 @@
+{% extends "photonic/view.html" %}
+{% block content %}
+    <div class="row">
+        <div class="col col-sm-3">
+            <b>Order Status</b>
+        </div>
+        <div class="col col-sm-9">
+            {{ order.status }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col col-sm-3">
+            <b>Product</b>
+        </div>
+        <div class="col col-sm-9">
+            {{ product.name }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col col-sm-3">
+            <b>Price</b>
+        </div>
+        <div class="col col-sm-9">
+            R {{ order.price }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col col-sm-3">
+            <b>Date Purchased</b>
+        </div>
+        <div class="col col-sm-9">
+            {{ order.payment_date }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col col-sm-3">
+            <b>Order ID</b>
+        </div>
+        <div class="col col-sm-9">
+            {{ order.id }}
+        </div>
+    </div>
+
+<div class="row">
+&nbsp;
+</div>
+
+{%  if additional %}
+    {{ additional }}
+{%  endif %}
+
+{% endblock %}
+
+{% block buttons %}
+    <a href="#" onclick="close_window();" class="btn btn-default">Back</a>
+{% endblock %}
