@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018-2019 Christiaan Frans Rademan.
+# Copyright (c) 2019 Christiaan Frans Rademan.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,10 +38,12 @@ from netrino.models.processes import netrino_process
 @register.model()
 class netrino_workflow(SQLModel):
     id = SQLModel.Uuid(default=uuid4, internal=True)
-    workflow_id = SQLModel.Uuid()
-    node_id = SQLModel.Integer(signed=False, null=True)
-    node_type = SQLModel.String()
+    process_id = SQLModel.Uuid()
+    node = SQLModel.Integer(signed=False, null=True)
+    node_id = SQLModel.String(null=True)
+    node_type = SQLModel.String(null=True)
     node_parent = SQLModel.Integer(signed=False, null=True)
+    node_parent_id = SQLModel.String(null=True)
     node_label = SQLModel.String()
     node_description = SQLModel.String()
     node_style = SQLModel.String()
@@ -50,13 +52,23 @@ class netrino_workflow(SQLModel):
     node_width = SQLModel.Integer(null=True)
     node_height = SQLModel.Integer(null=True)
     node_source = SQLModel.Integer(null=True)
+    node_source_id = SQLModel.String(null=True)
     node_target = SQLModel.Integer(null=True)
+    node_target_id = SQLModel.String(null=True)
     node_link_target_x = SQLModel.Integer(null=True)
     node_link_target_y = SQLModel.Integer(null=True)
     node_link_source_x = SQLModel.Integer(null=True)
     node_link_source_y = SQLModel.Integer(null=True)
+    node_link_point_x = SQLModel.Integer(null=True)
+    node_link_point_y = SQLModel.Integer(null=True)
     node_removed = SQLModel.Boolean(default=False)
+    updated_time = SQLModel.DateTime(null=True, internal=True)
     entry_point = SQLModel.String()
     metadata = SQLModel.MediumText(null=True)
-    workflow_ref = SQLModel.ForeignKey(workflow_id, netrino_process.id)
+    workflow_node_index = SQLModel.Index(node_id)
+    workflow_parent_ref = SQLModel.ForeignKey(node_parent_id, node_id)
+    workflow_target_ref = SQLModel.ForeignKey(node_target_id, node_id)
+    workflow_source_ref = SQLModel.ForeignKey(node_source_id, node_id)
+    workflow_process_ref = SQLModel.ForeignKey(process_id, netrino_process.id)
+    workflow_unique_obj = SQLModel.UniqueIndex(process_id, node_id)
     primary_key = id

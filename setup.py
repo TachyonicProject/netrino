@@ -191,16 +191,9 @@ setup_dict = dict(
             'openstack = netrino.interfaces.openstack:Interface',
             'contrail = netrino.interfaces.contrail:Interface'
         ],
-        'tachyonic.netrino.mappers': [
-            'infinitystone_domain = '
-            'netrino.helpers.mappers:domain_from_context',
-            'infinitystone_tenant = '
-            'netrino.helpers.mappers:tenant_from_context',
-            'contrail_vn_name_from_context = '
-            'netrino.helpers.mappers:contrail_vn_name_from_context',
-            'contrail_vn_plus_existing = '
-            'netrino.helpers.mappers:contrail_vn_plus_existing',
-        ],
+        'tachyonic.ui': [
+            'netrino = netrino.ui.app'
+        ],  
     }
 )
 

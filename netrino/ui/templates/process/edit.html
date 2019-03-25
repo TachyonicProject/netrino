@@ -1,5 +1,16 @@
 {% extends "photonic/view.html" %}
 {% block content %}
-    <div data-graph="{{APP}}/mxgraph/netrino.ui/process/workfloweditor.xml/{{process_id}}/1" data-url="{{APP}}/apiproxy?url=/workflow/{{process_id}}&endpoint=orchestration" class="mxgraphbase">
+    <form id="form" autocomplete="off" method='post' enctype="multipart/form-data" data-no-submit>
+        {{ form }}
+    </form>
+{% endblock %}
+{% block buttons %}
+    <a href="{{ APP }}/infrastructure/orchestration/process" class="btn btn-default">Cancel</a>
+    <a data-confirm="Remove process?" data-close-window href="{{ APP }}/infrastructure/orchestration/process/delete/{{process_id}}" class="btn btn-danger">Remove</a>
+    <a href="{{ APP }}/infrastructure/orchestration/process/edit/{{process_id}}" data-form="form" class="btn btn-primary">Save</a>
+{% endblock %}
+{% block more %}
+    <h1>Process Workflow</h1>
+    <div data-graph="{{APP}}/mxgraph/netrino.ui/process/workfloweditor.xml/{{process_id}}/1" data-url="{{APP}}/apiproxy?url=/v1/workflow/{{process_id}}&endpoint=orchestration" class="mxgraphbase">
     </div>
 {% endblock %}
