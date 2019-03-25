@@ -79,9 +79,20 @@ class Orders:
         return product, None, None
 
 
+    def _get_orders(self):
+        sql = 'SELECT netrino_order.id as id,' \
+              'netrino_product.name as product_name,' \
+              'netrino_order.creation_time as creation_time,' \
+              'netrino_order.tenant_id as tenant_id ' \
+              'FROM netrino_order,netrino_product ' \
+              'WHERE netrino_order.product_id=netrino_product.id'
+        with db() as conn:
+            return conn.execute(sql).fetchall()
+
     def list(self, req, resp):
-        return sql_list(req, 'netrino_order',
-                        ('id', 'product_id',))
+        orders = self._get_orders()
+
+        return raw_list(req, orders)
 
     def create(self, req, resp):
 

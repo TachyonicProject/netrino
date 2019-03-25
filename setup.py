@@ -186,11 +186,6 @@ setup_dict = dict(
         'tachyonic.element.classifications': [
             'ont = netrino.elements.fttx.ont:ONT'
         ],
-        'tachyonic.element.interfaces': [
-            'netconf = netrino.interfaces.netconf:Interface',
-            'openstack = netrino.interfaces.openstack:Interface',
-            'contrail = netrino.interfaces.contrail:Interface'
-        ],
         'tachyonic.ui': [
             'netrino = netrino.ui.app'
         ],  
