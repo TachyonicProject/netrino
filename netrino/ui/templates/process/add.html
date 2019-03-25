@@ -1,0 +1,10 @@
+{% extends "photonic/view.html" %}
+{% block content %}
+<form id="form" method='post' enctype="multipart/form-data" data-no-submit>
+    {{ form }}
+</form>
+{% endblock %}
+{% block buttons %}
+    <a href="#" data-close-window class="btn btn-default">Cancel</a>
+    <a href="{{ APP }}/infrastructure/orchestration/process/add" data-close-window data-form="form" class="btn btn-primary">New</a>
+{% endblock %}
