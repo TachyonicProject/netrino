@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Frans Rademan.
+# Copyright (c) 2018-2019 Christiaan Frans Rademan.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,8 @@
 # THE POSSIBILITY OF SUCH DAMAGE.
 
 from luxon.core.handlers.wsgi import Wsgi
-application = Wsgi(__name__)
+application = Wsgi(__name__,
+                   ini='/etc/tachyonic/netrino.ini')
 
 # This the place to start importing luxon packages/modules.
 import netrino.app
