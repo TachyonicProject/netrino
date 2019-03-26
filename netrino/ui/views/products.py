@@ -53,6 +53,7 @@ def render_model(element_model, pid, mval, mtype, view, data=None,
 g.nav_menu.add('/Infrastructure/Orchestration/Product Catalog',
                href='/products',
                tag='products:admin',
+               endpoint='orchestration',
                feather='package')
 
 

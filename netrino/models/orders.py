@@ -43,6 +43,7 @@ class netrino_order(SQLModel):
     product_id = SQLModel.Uuid(null=False)
     domain = SQLModel.Fqdn(internal=True)
     tenant_id = SQLModel.Uuid()
+    user_id = SQLModel.Uuid()
     metadata = SQLModel.MediumText()
     price = SQLModel.Decimal(6, 2, default=0)
     status = SQLModel.String(default="created")

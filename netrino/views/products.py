@@ -47,13 +47,13 @@ from netrino.models.products import netrino_product_entrypoint
 class Products:
     def __init__(self):
         router.add('GET', '/v1/product/{pid}', self.product,
-                   tag='products:view')
+                   tag='customer')
         router.add('GET', '/v1/products', self.products,
-                   tag='login')
+                   tag='customer')
         router.add('GET', '/v1/products/categories', self.categories,
-                   tag='login')
+                   tag='customer')
         router.add('POST', '/v1/product', self.create,
-                   tag='products:view')
+                   tag='products:admin')
         router.add(['PUT', 'PATCH'], '/v1/product/{pid}', self.update,
                    tag='products:admin')
         router.add('DELETE', '/v1/product/{pid}', self.delete,
@@ -68,11 +68,11 @@ class Products:
                    self.add_image,
                    tag='products:admin')
         router.add('GET', '/v1/product/{pid}/image',
-               self.image)
+                    self.image,
+                   tag='customer')
         router.add('GET', '/v1/products/tasks',
                    self.entrypoints,
                    tag='products:admin')
-
         router.add('POST', '/v1/product/{pid}/task/{ep}',
                    self.add_ep,
                    tag='products:admin')
