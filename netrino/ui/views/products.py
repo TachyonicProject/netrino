@@ -39,9 +39,13 @@ from netrino.ui.models.products import netrino_product
 from netrino.ui.models.products import netrino_custom_attr
 
 
-def render_model(element_model, pid, mval, mtype, view, data=None,
+def render_model(element_model, pid, mval, mtype, view, data={},
                  ro=False, **kwargs):
-    html_form = form(element_model, data, readonly=ro)
+    if hasattr(element_model, '__bases__') and element_model.__bases__[
+        0].__name__ == 'Model':
+        html_form = form(element_model, data, readonly=ro)
+    elif isinstance(element_model, str):
+        html_form = render_template(element_model, **data)
     return render_template('netrino.ui/products/%s.html' % mtype,
                            view='%s %s %s' % (view, mval, mtype),
                            form=html_form,
@@ -54,7 +58,7 @@ g.nav_menu.add('/Infrastructure/Orchestration/Product Catalog',
                href='/products',
                tag='products:admin',
                endpoint='orchestration',
-               feather='package')
+                   feather='package')
 
 
 @register.resources()
@@ -198,7 +202,7 @@ class Products():
         except KeyError:
             raise FieldMissing('Service', 'Product Service',
                                'Please select Service for Product')
-        model = EntryPoints('netrino.product.tasks')[ep].model
+        model = EntryPoints('netrino.product.tasks')[ep].form
 
         return render_model(model, pid, ep, 'service', view="Add")
 
@@ -223,7 +227,7 @@ class Products():
                                             pid, ep,),
                                         data=req.form_dict)
 
-        model = EntryPoints('netrino.product.tasks')[ep].model
+        model = EntryPoints('netrino.product.tasks')[ep].form
 
         return render_model(model, pid, ep,
                             'service', view="Edit",
@@ -234,7 +238,7 @@ class Products():
                                         '/v1/product/%s/%s' % (
                                            pid, ep,))
 
-        model = EntryPoints('netrino.product.tasks')[ep].model
+        model = EntryPoints('netrino.product.tasks')[ep].form
 
         return render_model(model, pid, ep,
                             'service', view="View",
