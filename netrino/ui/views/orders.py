@@ -65,6 +65,7 @@ def process_notification(req, type, data):
         result = method(req)
 
         data['price'] = result['product_price']
+        data['status'] = result['status']
 
         order = req.context.api.execute('PUT',
                                         'v1/order/' + result['order_id'],
@@ -222,8 +223,7 @@ class Orders():
         if req.method == 'GET':
             return self.orders(req, resp)
         elif req.method == 'POST':
-            data = {'status': 'payment received',
-                    'payment_date': now(),
+            data = {'payment_date': now(),
                     'metadata': {'gateway_data': req.form_dict}}
 
             result = process_notification(req, 'success', data)
@@ -243,8 +243,7 @@ class Orders():
                                view="Payment Failed", result=result)
 
     def notify(self, req, resp):
-        data = {'status': 'completed',
-                'payment_date': now(),
+        data = {'payment_date': now(),
                 'metadata': {'gateway_data': req.form_dict}}
 
         result = process_notification(req, 'notify', data)
