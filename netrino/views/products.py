@@ -38,7 +38,7 @@ from luxon.helpers.api import sql_list, obj, raw_list
 from luxon.utils.pkg import EntryPoints
 
 from netrino.models.products import netrino_product
-from netrino.models.products import netrino_custom_attr
+# from netrino.models.products import netrino_custom_attr
 from netrino.models.products import netrino_categories
 from netrino.models.products import netrino_product_entrypoint
 
@@ -68,7 +68,7 @@ class Products:
                    self.add_image,
                    tag='products:admin')
         router.add('GET', '/v1/product/{pid}/image',
-                    self.image,
+                   self.image,
                    tag='customer')
         router.add('GET', '/v1/products/tasks',
                    self.entrypoints,
@@ -111,14 +111,22 @@ class Products:
         return product
 
     def products(self, req, resp):
-        return sql_list(req, 'netrino_product', ('id',
-                                                 'name',
-                                                 'parent_id',
-                                                 'price',
-                                                 'monthly',
-                                                 'description',
-                                                 'creation_time')
-                        )
+        return sql_list(req,
+                        'netrino_product',
+                        fields=('id',
+                                'name',
+                                'parent_id',
+                                'price',
+                                'monthly',
+                                'description',
+                                'creation_time',),
+                        search={'id': str,
+                                'name': str,
+                                'parent_id': str,
+                                'price': str,
+                                'monthly': str,
+                                'description': str,
+                                'creation_time': str})
 
     def categories(self, req, resp):
         sql = 'SELECT DISTINCT(name) FROM netrino_categories'
@@ -173,8 +181,7 @@ class Products:
                       'image': b"R0lGODlhAQABAIAAAAAAAP///"
                                b"yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"}
 
-
-        resp.set_header('Content-Type',result['image_type'])
+        resp.set_header('Content-Type', result['image_type'])
         resp.content_type = result['image_type']
         resp.write(base64.b64decode(result['image']))
 
