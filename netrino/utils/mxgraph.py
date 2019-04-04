@@ -227,8 +227,8 @@ class MxChangeDecoder(object):
                             obj['node_link_point_y'] = None
                             obj['node_link_source_x'] = None
                             obj['node_link_source_y'] = None
-                            obj['node_link_target_x'] = None
-                            obj['node_link_target_y'] = None
+                            # obj['node_link_target_x'] = None
+                            # obj['node_link_target_y'] = None
                     else:
                         obj['node_target'] = e.attrib.get('terminal')
                         obj['node_target_id'] = self._id(
@@ -236,8 +236,8 @@ class MxChangeDecoder(object):
                         if obj['node_target'] is not None:
                             obj['node_link_point_x'] = None
                             obj['node_link_point_y'] = None
-                            obj['node_link_source_x'] = None
-                            obj['node_link_source_y'] = None
+                            # obj['node_link_source_x'] = None
+                            # obj['node_link_source_y'] = None
                             obj['node_link_target_x'] = None
                             obj['node_link_target_y'] = None
 
