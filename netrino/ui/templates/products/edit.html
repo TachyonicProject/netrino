@@ -1,7 +1,7 @@
 {% extends "photonic/view.html" %}
 
 {% block content %}
-    <form id="form" method='post' enctype="multipart/form-data">
+    <form id="form" method='post' data-no-submit enctype="multipart/form-data">
         {{ form }}
     </form>
     <h2>Image</h2>
@@ -58,6 +58,6 @@
 
 {% block buttons %}
     <a href="{{ APP }}/products/{{id}}" class="btn btn-default">Cancel</a>
-    <a data-confirm="Delete product?" data-closeall href="{{ APP }}/products/delete/{{id}}" class="btn btn-danger">Delete</a>
+    <a data-confirm="Delete product?" data-close-window=2 href="{{ APP }}/products/delete/{{id}}" class="btn btn-danger">Delete</a>
     <a href="{{ APP }}/products/edit/{{id}}" data-form="form" class="btn btn-primary">Update</a>
 {% endblock %}
