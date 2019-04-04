@@ -31,7 +31,7 @@ from luxon import GetLogger
 from luxon import router
 from luxon import register
 from luxon import db
-from luxon.constants import APPLICATION_XML, APPLICATION_JSON
+from luxon.constants import APPLICATION_XML
 from luxon.helpers.api import sql_list, obj
 from luxon.exceptions import SQLIntegrityError, HTTPBadRequest
 
@@ -73,8 +73,12 @@ class Workflow():
         return obj(req, netrino_process, sql_id=process_id)
 
     def get_processes(self, req, resp):
-        return sql_list(req, 'netrino_process',
-                        ('id', 'name',),)
+        return sql_list(req,
+                        'netrino_process',
+                        fields=('id',
+                                'name',),
+                        search={'id': str,
+                                'name': str})
 
     def post_process(self, req, resp):
         process = obj(req, netrino_process)
