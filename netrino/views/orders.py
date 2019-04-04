@@ -27,21 +27,20 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-import base64
 from luxon import register
 from luxon import router
 from luxon import db
 from luxon import js
-from luxon import g
 
 from luxon.utils.pkg import EntryPoints
-from luxon.helpers.api import raw_list, sql_list, obj, search_params
+from luxon.helpers.api import raw_list, obj
 from luxon.utils.unique import string_id
 
 from luxon.exceptions import ValidationError
 from luxon.exceptions import HTTPConflict
 
 from netrino.models.orders import netrino_order
+
 
 @register.resources()
 class Orders:
@@ -78,7 +77,6 @@ class Orders:
 
         return product, None, None
 
-
     def _get_orders(self):
         sql = 'SELECT netrino_order.id as id,' \
               'netrino_product.name as product_name,' \
@@ -103,7 +101,6 @@ class Orders:
         except ValidationError:
             raise HTTPConflict(title="Duplicate Order",
                                description="Please retry this request")
-
 
         return order
 
@@ -141,11 +138,10 @@ class Orders:
             sql += ' WHERE id=?'
 
             if vals:
-                conn.execute(sql,vals + [oid])
+                conn.execute(sql, vals + [oid])
                 conn.commit()
 
-            order = conn.execute(o_sql,oid).fetchone()
-
+            order = conn.execute(o_sql, oid).fetchone()
 
         return order
 
