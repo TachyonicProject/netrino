@@ -65,6 +65,7 @@ def process_notification(req, type, data):
         result = method(req)
 
         data['price'] = result['product_price']
+        data['status'] = result['status']
 
         order = req.context.api.execute('PUT',
                                         'v1/order/' + result['order_id'],
@@ -219,21 +220,23 @@ class Orders():
                                additional=additional)
 
     def success(self, req, resp):
-        if req.method == 'GET':
+        if req.method != 'POST':
             return self.orders(req, resp)
-        elif req.method == 'POST':
-            data = {'status': 'payment received',
-                    'payment_date': now(),
-                    'metadata': {'gateway_data': req.form_dict}}
 
-            result = process_notification(req, 'success', data)
-            result['payment_date'] = data['payment_date']
+        data = {'payment_date': now(),
+                'metadata': {'gateway_data': req.form_dict}}
 
-            return render_template('netrino.ui/orders/success.html',
-                                   view="Order Received",
-                                   **result)
+        result = process_notification(req, 'success', data)
+        result['payment_date'] = data['payment_date']
+
+        return render_template('netrino.ui/orders/success.html',
+                               view="Order Received",
+                               **result)
 
     def decline(self, req, resp):
+        if req.method != 'POST':
+            return self.orders(req, resp)
+
         data = {'status': 'declined',
                 'metadata': {'gateway_data': req.form_dict}}
 
@@ -243,8 +246,10 @@ class Orders():
                                view="Payment Failed", result=result)
 
     def notify(self, req, resp):
-        data = {'status': 'completed',
-                'payment_date': now(),
+        if req.method != 'POST':
+            return self.orders(req, resp)
+
+        data = {'payment_date': now(),
                 'metadata': {'gateway_data': req.form_dict}}
 
         result = process_notification(req, 'notify', data)
@@ -255,6 +260,9 @@ class Orders():
                                view="Notification Received", result=result)
 
     def redirect(self, req, resp):
+        if req.method != 'POST':
+            return self.orders(req, resp)
+
         purchase_date = now()
 
         metadata = {'gateway_data': req.form_dict,
