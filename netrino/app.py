@@ -38,7 +38,6 @@ from psychokinetic.middleware.client import Client
 from psychokinetic.utils.gclient import gclient
 
 gclient()
-g.api.collect_endpoints()
 register.middleware(Client)
 
 import netrino.views
