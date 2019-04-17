@@ -35,6 +35,7 @@ from luxon import js
 from luxon.utils.pkg import EntryPoints
 from luxon.helpers.api import raw_list, obj
 from luxon.utils.unique import string_id
+from luxon.utils.timezone import to_utc
 
 from luxon.exceptions import ValidationError
 from luxon.exceptions import HTTPConflict
@@ -132,7 +133,7 @@ class Orders:
 
             if 'payment_date' in req.json:
                 fields.append('payment_date=?')
-                vals.append(req.json['payment_date'])
+                vals.append(to_utc(req.json['payment_date']))
 
             sql += ','.join(fields)
             sql += ' WHERE id=?'
