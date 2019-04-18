@@ -67,17 +67,20 @@ def process_notification(req, type, data):
         data['price'] = result['product_price']
         data['status'] = result['status']
 
-        order = req.context.api.execute('PUT',
-                                        'v1/order/' + result['order_id'],
-                                        endpoint='orchestration',
-                                        data=data).json
+        order = g.api.execute('PUT',
+                              'v1/order/' + result['order_id'],
+                              endpoint='orchestration',
+                              data=data).json
 
-        product = req.context.api.execute('GET',
-                                          'v1/product/'
-                                          + order['product_id'],
-                                          endpoint='orchestration').json
+        try:
+            product = req.context.api.execute('GET',
+                                              'v1/product/'
+                                              + order['product_id'],
+                                              endpoint='orchestration').json
 
-        result['product_name'] = product['name']
+            result['product_name'] = product['name']
+        except:
+            pass
 
     return result
 
