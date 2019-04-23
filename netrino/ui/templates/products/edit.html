@@ -23,12 +23,12 @@
     <table class="display" data-url="/v1/product/{{id}}&view=categories" data-endpoint="orchestration" width="100%">
         <thead>
             <th id='name'>Category</th>
-            <th data-confirm="Remove Category?" data-href="{{APP}}/products/rm-category" data-close-window=2 width="2rem">
+            <th data-confirm="Remove Category?" data-table data-href="{{APP}}/products/rm-category" data-close-window=1 width="2rem">
                 <span data-feather="minus-square"></span>
             </th>
         </thead>
     </table>
-    <form id='category_form' data-datatable data-msg="Succesfully added Category" autocomplete="off" enctype="multipart/form-data" class="row" action="{{ APP }}/products/add-category/{{id}}">
+    <form id='category_form' data-table data-msg="Succesfully added Category" autocomplete="off" enctype="multipart/form-data" class="row" action="{{ APP }}/products/add-category/{{id}}">
         <div class="col-sm-5">
              <select id="add_category" name="category" data-id="name" data-url="/v1/products/categories" data-placeholder="" data-endpoint="orchestration" data-tags="true">
             </select>
@@ -40,12 +40,12 @@
     <table class="display" data-url="/v1/product/{{id}}&view=services" data-endpoint="orchestration" width="100%">
         <thead>
             <th id='entrypoint'>Service</th>
-            <th data-confirm="Remove Service?" data-href="{{APP}}/products/rm-service" data-close width="2rem">
+            <th data-confirm="Remove Service?" data-table data-href="{{APP}}/products/rm-service" data-close-window=1 width="2rem">
                 <span data-feather="minus-square"></span>
             </th>
         </thead>
     </table>
-        <form id='service_form' autocomplete="off" data-datatable action="{{ APP }}/products/add-service/{{id}}" enctype="multipart/form-data" class="row">
+        <form id='service_form' autocomplete="off" data-table action="{{ APP }}/products/add-service/{{id}}" enctype="multipart/form-data" class="row">
         <div class="col-sm-5">
              <select id="add_service" name="service" data-id="name" data-url="/v1/products/tasks" data-endpoint="orchestration" data-placeholder="Select Service">
             </select>
@@ -58,6 +58,6 @@
 
 {% block buttons %}
     <a href="{{ APP }}/products/{{id}}" class="btn btn-default">Cancel</a>
-    <a data-confirm="Delete product?" data-close-window=2 href="{{ APP }}/products/delete/{{id}}" class="btn btn-danger">Delete</a>
+    <a data-confirm="Delete product?" data-close-window=2 data-table href="{{ APP }}/products/delete/{{id}}" class="btn btn-danger">Delete</a>
     <a href="{{ APP }}/products/edit/{{id}}" data-form="form" class="btn btn-primary">Update</a>
 {% endblock %}
