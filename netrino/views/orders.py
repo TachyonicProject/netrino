@@ -82,7 +82,8 @@ class Orders:
         sql = 'SELECT netrino_order.id as id,' \
               'netrino_product.name as product_name,' \
               'netrino_order.creation_time as creation_time,' \
-              'netrino_order.tenant_id as tenant_id ' \
+              'netrino_order.tenant_id as tenant_id, ' \
+              'netrino_order.status as status ' \
               'FROM netrino_order,netrino_product ' \
               'WHERE netrino_order.product_id=netrino_product.id'
         vals = []
