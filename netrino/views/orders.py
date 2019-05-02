@@ -78,18 +78,22 @@ class Orders:
 
         return product, None, None
 
-    def _get_orders(self):
+    def _get_orders(self, req):
         sql = 'SELECT netrino_order.id as id,' \
               'netrino_product.name as product_name,' \
               'netrino_order.creation_time as creation_time,' \
               'netrino_order.tenant_id as tenant_id ' \
               'FROM netrino_order,netrino_product ' \
               'WHERE netrino_order.product_id=netrino_product.id'
+        vals = []
+        if req.context_tenant_id:
+            sql += ' AND tenant_id=?'
+            vals.append(req.context_tenant_id)
         with db() as conn:
-            return conn.execute(sql).fetchall()
+            return conn.execute(sql, vals).fetchall()
 
     def list(self, req, resp):
-        orders = self._get_orders()
+        orders = self._get_orders(req)
 
         return raw_list(req, orders)
 
