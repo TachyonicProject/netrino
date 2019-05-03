@@ -5,6 +5,9 @@
         <tr>
             <th id='product_name'>Product</th>
             <th id='creation_time'>Date</th>
+            {% if not REQ.context_tenant_id %}
+                <th id='tenant_name'>Tenant</th>
+            {% endif %}
             <th id='status'>Status</th>
             <th data-href="/orders" data-modal width="2rem">
                 <span data-feather="edit"></span>

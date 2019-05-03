@@ -79,19 +79,41 @@ class Orders:
         return product, None, None
 
     def _get_orders(self, req):
-        sql = 'SELECT netrino_order.id as id,' \
-              'netrino_product.name as product_name,' \
-              'netrino_order.creation_time as creation_time,' \
-              'netrino_order.tenant_id as tenant_id, ' \
-              'netrino_order.status as status ' \
-              'FROM netrino_order,netrino_product ' \
-              'WHERE netrino_order.product_id=netrino_product.id'
+        select = {'netrino_order.id': 'id',
+                  'netrino_product.name': 'product_name',
+                  'netrino_order.creation_time': 'creation_time',
+                  'netrino_order.tenant_id': 'tenant_id',
+                  'netrino_order.status':'status'
+                  }
+
+        s_from = ['netrino_order', 'netrino_product']
+        where = {'netrino_order.product_id': 'netrino_product.id'}
         vals = []
+
         if req.context_tenant_id:
-            sql += ' AND tenant_id=?'
+            where['tenant_id'] = None
             vals.append(req.context_tenant_id)
+        else:
+            select['infinitystone_tenant.name'] = 'tenant_name'
+            s_from.append('infinitystone_tenant')
+            where['infinitystone_tenant.id'] = 'netrino_order.tenant_id'
+
+        select = ['%s AS %s' % (k,select[k],) for k in select]
+        select = 'SELECT ' + ','.join(select)
+        select += ' FROM ' + ','.join(s_from)
+
+        where_str = []
+
+        for k in where:
+            if where[k]:
+                where_str.append('%s=%s' % (k, where[k],))
+            else:
+                where_str.append('%s=?' % k)
+
+        select += ' WHERE ' + ' AND '.join(where_str)
+
         with db() as conn:
-            return conn.execute(sql, vals).fetchall()
+            return conn.execute(select, vals).fetchall()
 
     def list(self, req, resp):
         orders = self._get_orders(req)
