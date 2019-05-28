@@ -36,6 +36,7 @@ from luxon import js
 
 from luxon.helpers.api import sql_list, obj, raw_list
 from luxon.utils.pkg import EntryPoints
+from luxon.utils import sql
 
 from netrino.models.products import netrino_product
 # from netrino.models.products import netrino_custom_attr
@@ -111,8 +112,30 @@ class Products:
         return product
 
     def products(self, req, resp):
+        select = sql.Select('netrino_product')
+        f_product = sql.Field('netrino_product.id')
+        f_name = sql.Field('netrino_product.name')
+        f_parent_id = sql.Field('netrino_product.parent_id')
+        f_price = sql.Field('netrino_product.price')
+        f_monthly = sql.Field('netrino_product.monthly')
+        f_description = sql.Field('netrino_product.description')
+        f_creation_time = sql.Field('netrino_product.creation_time')
+
+        filter = req.query_params.get('category', None)
+        if filter:
+            f_category_product = sql.Field('netrino_categories.product_id')
+            f_category_name = sql.Field('netrino_categories.name')
+            j_product = f_category_product == f_product
+            select = sql.Select('netrino_categories')
+            select.where = f_category_name == sql.Value(filter)
+            select.inner_join('netrino_product', j_product)
+
+        select.fields = (
+            f_product, f_name, f_parent_id, f_price, f_monthly, f_description,
+            f_creation_time)
+
         return sql_list(req,
-                        'netrino_product',
+                        select,
                         fields=('id',
                                 'name',
                                 'parent_id',
