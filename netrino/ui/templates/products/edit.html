@@ -54,6 +54,28 @@
             <a href="{{ APP }}/products/add-service/{{id}}" data-form="service_form" class="btn btn-primary">Add Service</a>
         </div>
     </form>
+    <table class="display" data-url="/v1/product/{{id}}&view=attributes" data-endpoint="orchestration" width="100%">
+        <thead>
+            <th id='name'>Attribute Name</th>
+            <th id='value'>Attribute Value</th>
+            <th data-confirm="Remove Attribute?" data-table data-href="{{APP}}/products/rm-attr" data-close-window=1 width="2rem">
+                <span data-feather="minus-square"></span>
+            </th>
+        </thead>
+    </table>
+    <form id='attr_form' data-table data-msg="Succesfully added custom attribute" autocomplete="off" enctype="multipart/form-data" class="row" action="{{ APP }}/products/add-attr/{{id}}">
+        <div class="col-sm-4">
+             <select id="add_attribute_name" name="name" data-id="name" data-url="/v1/products/attributes" data-placeholder="" data-endpoint="orchestration" data-tags="true">
+            </select>
+        </div>
+        <div class="col-sm-4">
+             <input id="add_attribute_val" name="value" data-placeholder="" data-endpoint="orchestration" class="form-control">
+            </input>
+        </div>
+        <div class="col-sm-3">
+		  <input class="form-control btn btn-primary" type="submit" value="Add Attribute">
+	 </div>
+    </form>
 {% endblock %}
 
 {% block buttons %}

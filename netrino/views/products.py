@@ -39,7 +39,7 @@ from luxon.utils.pkg import EntryPoints
 from luxon.utils import sql
 
 from netrino.models.products import netrino_product
-# from netrino.models.products import netrino_custom_attr
+from netrino.models.products import netrino_custom_attr
 from netrino.models.products import netrino_categories
 from netrino.models.products import netrino_product_entrypoint
 
@@ -53,6 +53,8 @@ class Products:
                    tag='customer')
         router.add('GET', '/v1/products/categories', self.categories,
                    tag='customer')
+        router.add('GET', '/v1/products/attributes', self.attributes,
+                   tag='customer')
         router.add('POST', '/v1/product', self.create,
                    tag='products:admin')
         router.add(['PUT', 'PATCH'], '/v1/product/{pid}', self.update,
@@ -64,6 +66,12 @@ class Products:
                    tag='products:admin')
         router.add('DELETE', '/v1/products/category/{cid}',
                    self.delete_category,
+                   tag='products:admin')
+        router.add('POST', '/v1/product/{pid}/attribute',
+                   self.add_attr,
+                   tag='products:admin')
+        router.add('DELETE', '/v1/products/attribute/{aid}',
+                   self.delete_attr,
                    tag='products:admin')
         router.add('POST', '/v1/product/{pid}/image',
                    self.add_image,
@@ -92,12 +100,19 @@ class Products:
         with db() as conn:
             return conn.execute(sql, (pid,)).fetchall()
 
+    def _get_attrs(self, pid):
+        sql = 'SELECT * FROM ' \
+              'netrino_custom_attr WHERE product_id=?'
+        with db() as conn:
+            return conn.execute(sql, (pid,)).fetchall()
+
     def product(self, req, resp, pid):
         product = obj(req, netrino_product, sql_id=pid).dict
         del product['image']
 
         categories = self._get_categories(pid)
         services = self._get_services(pid)
+        attrs = self._get_attrs(pid)
         product['categories'] = categories
         product['services'] = services
 
@@ -108,6 +123,8 @@ class Products:
                 return raw_list(req, categories)
             elif view == 'services':
                 return raw_list(req, services)
+            elif view == 'attributes':
+                return raw_list(req, attrs)
 
         return product
 
@@ -157,6 +174,12 @@ class Products:
             categories = conn.execute(sql).fetchall()
         return raw_list(req, categories)
 
+    def attributes(self, req, resp):
+        sql = 'SELECT DISTINCT(name) FROM netrino_custom_attr'
+        with db()as conn:
+            attributes = conn.execute(sql).fetchall()
+        return raw_list(req, attributes)
+
     def create(self, req, resp):
         product = obj(req, netrino_product)
         product.commit()
@@ -181,6 +204,16 @@ class Products:
 
     def delete_category(self, req, resp, cid):
         category_entry = obj(req, netrino_categories, sql_id=cid)
+        category_entry.commit()
+
+    def add_attr(self, req, resp, pid):
+        category_entry = obj(req, netrino_custom_attr)
+        category_entry['product_id'] = pid
+        category_entry.commit()
+        return category_entry
+
+    def delete_attr(self, req, resp, aid):
+        category_entry = obj(req, netrino_custom_attr, sql_id=aid)
         category_entry.commit()
 
     def add_image(self, req, resp, pid):
