@@ -56,6 +56,8 @@ class Orders:
                    tag='customer')
         router.add('POST', '/v1/activate/product/{oid}', self.activate,
                    tag='services:admin')
+        router.add('POST', '/v1/deactivate/product/{oid}', self.deactivate,
+                   tag='services:admin')
 
     def _get_service(self, oid):
         sql_order = 'SELECT product_id FROM netrino_order WHERE id=?'
@@ -83,7 +85,8 @@ class Orders:
                   'netrino_product.name': 'product_name',
                   'netrino_order.creation_time': 'creation_time',
                   'netrino_order.tenant_id': 'tenant_id',
-                  'netrino_order.status':'status'
+                  'netrino_order.status':'status',
+                  'netrino_order.short_id': 'short_id'
                   }
 
         s_from = ['netrino_order', 'netrino_product']
@@ -185,5 +188,17 @@ class Orders:
             ep = EntryPoints('netrino.product.tasks')[ep]
             ep_obj = ep(req, metadata, oid, product)
             result = ep_obj.deploy()
+
+        return result
+
+    def deactivate(self, req, resp, oid):
+        product, ep, metadata = self._get_service(oid)
+
+        result = {'reason': 'Nothing to do, no "netrino.product.tasks" '
+                            'entrypoint found'}
+        if ep:
+            ep = EntryPoints('netrino.product.tasks')[ep]
+            ep_obj = ep(req, metadata, oid, product)
+            result = ep_obj.deactivate()
 
         return result
