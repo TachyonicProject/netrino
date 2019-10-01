@@ -76,6 +76,28 @@
 		  <input class="form-control btn btn-primary" type="submit" value="Add Attribute">
 	 </div>
     </form>
+    <table class="display" data-url="/v1/product/{{id}}&view=payment_gateways" data-endpoint="orchestration" width="100%">
+        <thead>
+            <th id='name'>Payment Gateway Name</th>
+            <th id='description'>Description</th>
+            <th data-confirm="Remove Payment Gateway?" data-table data-href="{{APP}}/products/rm-pmt-gw" data-close-window=1 width="2rem">
+                <span data-feather="minus-square"></span>
+            </th>
+        </thead>
+    </table>
+    <form id='attr_form' data-table data-msg="Succesfully added Payment Gateway" autocomplete="off" enctype="multipart/form-data" class="row" action="{{ APP }}/products/add-pmt-gw/{{id}}">
+        <div class="col-sm-4">
+             <select id="add_pmt_gw_name" name="name" data-id="name" data-url="/v1/products/payment-gateways" data-placeholder="" data-endpoint="orchestration">
+            </select>
+        </div>
+        <div class="col-sm-4">
+             <input id="add_pmt_gw_desc" name="description" data-placeholder="" data-endpoint="orchestration" class="form-control">
+            </input>
+        </div>
+        <div class="col-sm-3">
+		  <input class="form-control btn btn-primary" type="submit" value="Add Payment Gateway">
+	 </div>
+    </form>
 {% endblock %}
 
 {% block buttons %}
