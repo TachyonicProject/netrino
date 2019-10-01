@@ -33,6 +33,12 @@
 {% if form %}
 <form id="customize_order" method="post" enctype="multipart/form-data">
 {{ form }}
+<div class="form-group">
+<label for="payment_gateway">Payment Gateway</label>
+<select class="form-control" data-id="name" name="payment_gateway" id="payment_gateway" data-url="/v1/product/{{product.id}}&view=payment_gateways" data-endpoint="orchestration" data-text="description">
+</select>
+</div>
+</form>
 {%  endif %}
 
 {% endblock %}
