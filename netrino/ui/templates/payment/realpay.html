@@ -5,8 +5,6 @@
   <input type="hidden" name="TrackingCode" value="{{ tracking_code }}">
   <input type="hidden" name="NumberOfInstalments" value="{{ number_of_installments }}">
   <input type="hidden" name="CTCPercentage" value="{{ ctc_percentage }}">
-  <input type="hidden" name="IDType" value="{{ id_type }}">
-  <input type="hidden" name="IDNumber" value="{{ id_number }}">
   <div class="form-group">
     <label>Given by (Name of account holder)</label>
     <input type="text" name="contact_name" class="form-control" value="{{customer_name}}" required>
@@ -32,6 +30,18 @@
     <select class="form-control" name="account-type" required>
         <option value="1">Cheque</option>
         <option value="2">Savings</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label>ID Number</label>
+    <input type="text" name="IDNumber" class="form-control"{% if id_number %} value="{{ id_number }}"{% endif %}}>
+  </div>
+  <div class="form-group">
+    <label>ID Type</label>
+    <select name="IDType" class="form-control" required>
+        <option value="I"{% if id_type=="I" %} selected{% endif %}>ID Number</option>
+        <option value="P"{% if id_type=="P" %} selected{% endif %}>Passport</option>
+        <option value="T"{% if id_type=="T" %} selected{% endif %}>Temporary Residence Permit</option>
     </select>
   </div>
   <div class="form-group">
