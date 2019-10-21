@@ -100,6 +100,26 @@ class Products():
                    tag='products:admin')
 
         router.add('POST',
+                   '/products/add-attr/{pid}',
+                   self.add_attr,
+                   tag='products:admin')
+
+        router.add('GET',
+                   '/products/rm-attr/{aid}',
+                   self.rm_attr,
+                   tag='products:admin')
+
+        router.add('POST',
+                   '/products/add-pmt-gw/{pid}',
+                   self.add_pmt_gw,
+                   tag='products:admin')
+
+        router.add('GET',
+                   '/products/rm-pmt-gw/{gwid}',
+                   self.rm_pmt_gw,
+                   tag='products:admin')
+
+        router.add('POST',
                    '/products/add-image/{pid}',
                    self.add_image,
                    tag='products:admin')
@@ -187,6 +207,26 @@ class Products():
     def rm_category(self, req, resp, cid):
         req.context.api.execute('DELETE',
                                 '/v1/products/category/%s' % cid,
+                                endpoint='orchestration')
+
+    def add_attr(self, req, resp, pid):
+        req.context.api.execute('POST',
+                                '/v1/product/%s/attribute' % (pid,),
+                                endpoint='orchestration', data=req.form_dict)
+
+    def rm_attr(self, req, resp, aid):
+        req.context.api.execute('DELETE',
+                                '/v1/products/attribute/%s' % aid,
+                                endpoint='orchestration')
+
+    def add_pmt_gw(self, req, resp, pid):
+        req.context.api.execute('POST',
+                                '/v1/product/%s/payment-gateway' % (pid,),
+                                endpoint='orchestration', data=req.form_dict)
+
+    def rm_pmt_gw(self, req, resp, gwid):
+        req.context.api.execute('DELETE',
+                                '/v1/products/payment-gateway/%s' % gwid,
                                 endpoint='orchestration')
 
     def add_image(self, req, resp, pid):

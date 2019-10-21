@@ -35,6 +35,7 @@ from luxon import js
 from luxon.utils.pkg import EntryPoints
 from luxon.helpers.api import raw_list, obj
 from luxon.utils.unique import string_id
+from luxon.utils.timezone import to_utc
 
 from luxon.exceptions import ValidationError
 from luxon.exceptions import HTTPConflict
@@ -54,6 +55,8 @@ class Orders:
         router.add(['PUT', 'PATCH'], '/v1/order/{oid}', self.update,
                    tag='customer')
         router.add('POST', '/v1/activate/product/{oid}', self.activate,
+                   tag='services:admin')
+        router.add('POST', '/v1/deactivate/product/{oid}', self.deactivate,
                    tag='services:admin')
 
     def _get_service(self, oid):
@@ -77,18 +80,46 @@ class Orders:
 
         return product, None, None
 
-    def _get_orders(self):
-        sql = 'SELECT netrino_order.id as id,' \
-              'netrino_product.name as product_name,' \
-              'netrino_order.creation_time as creation_time,' \
-              'netrino_order.tenant_id as tenant_id ' \
-              'FROM netrino_order,netrino_product ' \
-              'WHERE netrino_order.product_id=netrino_product.id'
+    def _get_orders(self, req):
+        select = {'netrino_order.id': 'id',
+                  'netrino_product.name': 'product_name',
+                  'netrino_order.creation_time': 'creation_time',
+                  'netrino_order.tenant_id': 'tenant_id',
+                  'netrino_order.status':'status',
+                  'netrino_order.short_id': 'short_id'
+                  }
+
+        s_from = ['netrino_order', 'netrino_product']
+        where = {'netrino_order.product_id': 'netrino_product.id'}
+        vals = []
+
+        if req.context_tenant_id:
+            where['tenant_id'] = None
+            vals.append(req.context_tenant_id)
+        else:
+            select['infinitystone_tenant.name'] = 'tenant_name'
+            s_from.append('infinitystone_tenant')
+            where['infinitystone_tenant.id'] = 'netrino_order.tenant_id'
+
+        select = ['%s AS %s' % (k,select[k],) for k in select]
+        select = 'SELECT ' + ','.join(select)
+        select += ' FROM ' + ','.join(s_from)
+
+        where_str = []
+
+        for k in where:
+            if where[k]:
+                where_str.append('%s=%s' % (k, where[k],))
+            else:
+                where_str.append('%s=?' % k)
+
+        select += ' WHERE ' + ' AND '.join(where_str)
+
         with db() as conn:
-            return conn.execute(sql).fetchall()
+            return conn.execute(select, vals).fetchall()
 
     def list(self, req, resp):
-        orders = self._get_orders()
+        orders = self._get_orders(req)
 
         return raw_list(req, orders)
 
@@ -132,7 +163,7 @@ class Orders:
 
             if 'payment_date' in req.json:
                 fields.append('payment_date=?')
-                vals.append(req.json['payment_date'])
+                vals.append(to_utc(req.json['payment_date']))
 
             sql += ','.join(fields)
             sql += ' WHERE id=?'
@@ -157,5 +188,17 @@ class Orders:
             ep = EntryPoints('netrino.product.tasks')[ep]
             ep_obj = ep(req, metadata, oid, product)
             result = ep_obj.deploy()
+
+        return result
+
+    def deactivate(self, req, resp, oid):
+        product, ep, metadata = self._get_service(oid)
+
+        result = {'reason': 'Nothing to do, no "netrino.product.tasks" '
+                            'entrypoint found'}
+        if ep:
+            ep = EntryPoints('netrino.product.tasks')[ep]
+            ep_obj = ep(req, metadata, oid, product)
+            result = ep_obj.deactivate()
 
         return result

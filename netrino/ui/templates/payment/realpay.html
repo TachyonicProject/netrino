@@ -1,0 +1,167 @@
+<form id="realpay" method="POST" action="{{APP}}/{{action}}"> <!---Form POST**--->
+  <input type="hidden" name="order_id" value="{{ order_id }}">
+  <input type="hidden" name="ClientNumber" value="{{ client_number }}">
+  <input type="hidden" name="FrequencyCode" value="{{ frequency_code }}">
+  <input type="hidden" name="TrackingCode" value="{{ tracking_code }}">
+  <input type="hidden" name="NumberOfInstalments" value="{{ number_of_installments }}">
+  <input type="hidden" name="CTCPercentage" value="{{ ctc_percentage }}">
+  <div class="form-group">
+    <label>Given by (Name of account holder)</label>
+    <input type="text" name="contact_name" class="form-control" value="{{customer_name}}" required>
+  </div>
+  <div class="form-group">
+    <label>Address</label>
+    <textarea name="address" class="form-control" required>{{address}}</textarea>
+  </div>
+  <div class="form-group">
+    <label>Bank</label>
+    <select class="form-control" name="bank" id="bank" data-url="{{bank_url}}" data-endpoint="{{bank_endpoint}}" required></select>
+  </div>
+  <div class="form-group">
+    <label>Branch Code</label>
+    <select class="form-control" name="branch-code" id="branch-code" data-url="{{branch_code_url}}" data-endpoint="{{bank_endpoint}}" required></select>
+  </div>
+  <div class="form-group">
+    <label>Account number</label>
+    <input type="text" name="account-number" class="form-control" required>
+  </div>
+  <div class="form-group">
+    <label>Account type</label>
+    <select class="form-control" name="account-type" required>
+        <option value="1">Cheque</option>
+        <option value="2">Savings</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label>ID Number</label>
+    <input type="text" name="IDNumber" class="form-control"{% if id_number %} value="{{ id_number }}"{% endif %}}>
+  </div>
+  <div class="form-group">
+    <label>ID Type</label>
+    <select name="IDType" class="form-control" required>
+        <option value="I"{% if id_type=="I" %} selected{% endif %}>ID Number</option>
+        <option value="P"{% if id_type=="P" %} selected{% endif %}>Passport</option>
+        <option value="T"{% if id_type=="T" %} selected{% endif %}>Temporary Residence Permit</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label>Email</label>
+    <input type="text" name="EMail" class="form-control" required value="{{email}}">
+  </div>
+  <div class="form-group">
+    <label>Cellphone Number</label>
+    <input type="text" name="CellphoneNumber" class="form-control" required value="{{cell_number}}">
+  </div>
+  <div class="form-group">
+    <label>Amount</label>
+    <input type="text" name="InstalmentAmount" class="form-control" required readonly value="{{amount}}">
+  </div>
+  <div class="form-group">
+    <label>Date</label>
+    <input type="text" name="form_date" class="form-control datepicker" required value="{{date}}">
+  </div>
+  <div class="form-group">
+    <label>To:(name of beneficiary)</label>
+    <input type="text" name="beneficiary_name" class="form-control" required value={{beneficiary_name}} readonly>
+  </div>
+  <div class="form-group">
+    <label>Beneficiary’s address</label>
+    <textarea name="beneficiary_address" required class="form-control" readonly>{{beneficiary_address}}</textarea>
+  </div>
+  <div class="form-group">
+    <label>Abbreviated name as it will appear on your bank statement</label>
+    <input type="text" name="abbreviated_name" required class="form-control" value="{{abbreviated_name}}" readonly>
+  </div>
+  <div class="form-group">
+    This signed Authority and Mandate refers to our contract dated
+    <input type="text" name="contract_date" required class="form-control datepicker">
+  </div>
+  <div class="form-group">
+    I/We hereby authorise you to issue and deliver payment instructions to your
+    Banker for collection against my/our abovementioned account at my/our above-mentioned Bank
+    (or any other Bank or branch to which I/we may transfer my/our account) on condition that the sum of
+    such payment instructions will never exceed my/our obligations as agreed to in the Agreement, and commencing
+    on
+    <input type="text" name="InstalmentStartDate" required class="form-control datepicker">
+    and continuing until this Authority and Mandate is terminated by me/us by
+    giving you notice in writing of not less 20 ordinary working days, and sent by prepaid registered post or
+    delivered to your address indicated above.
+  </div>
+  <div class="form-group">
+    The individual payment instructions so authorised to be issued must
+        be issued and delivered as follows:
+        <ol type="I">
+          <li>on the
+              <select name="CollectionDay" data-url="{{collection_day_url}}" data-endpoint="{{bank_endpoint}}" required>
+              </select> day (“payment day”) of the month commencing on the commencement date mentioned above.
+              In the event that the payment day falls on a Sunday or recognized public holiday, the payment day
+              will automatically be the very next ordinary business day. Furthermore, if there are insufficient funds
+              in the (my) nominated account to meet the obligation, you are entitled to track my account and re-present
+              the instruction for payment as soon as sufficient funds are available in my account;
+          </li>
+          <li>{{installment_frequency}}, on or after the dates when the obligation in terms of the Agreement is due and
+              the amount of each individual payment instruction may not be more or less than the obligation due.
+          </li>
+        </ol>
+  </div>
+
+  <div class="form-group">
+    I /We understand that the withdrawals hereby authorised will be processed through a computerized system provided by
+    the Banks. I also understand that details of each withdrawal will be printed on my Bank statement. Such must contain
+    a number, which number must be included in the said payment instruction and if provided to me should enable me to
+    identify the Agreement.
+    This number must be added to this form in section D before the issuing of any payment instruction.
+      <ol type="A">
+          <li><b>MANDATE</b><br>
+              I/We acknowledge that all payment instructions issued by you shall be treated by my/our above mentioned
+              Bank as if the instructions had been issued by me/us personally.
+          </li>
+          <li><b>CANCELLATION</b><br>
+              I/We agree that although this Authority and Mandate may be cancelled by me/us, such cancellation will
+              not cancel the Agreement. I/We shall not be entitled to any refund of amounts which you have withdrawn
+              while this Authority was in force, if such amounts were legally owing to you.
+          </li>
+          <li><b>ASSIGNMENT</b><br>
+              I/We acknowledge that this authority may be ceded or assigned to a third party if the Agreement is also
+              ceded or assigned to that third party, but in the absence of such assignment of the Agreement, this
+              Authority and Mandate cannot be assigned to any third party.
+          </li>
+      </ol>
+  </div>
+  <div class="form-group">
+      <label><b>D. Agreement Reference number</b></label>
+      <input type="text" name="ContractNumber" required readonly value="{{contract_number}}" class="form-control">
+  </div>
+  <div class="form-group">
+      <label>By checking this box I confirm that I understand and accept the terms and conditions laid out on
+       this form.</label>
+      <input type="checkbox" name="customer_accept" required>
+  </div>
+</form>
+
+<script>
+$( function() {
+    $( ".datepicker" ).datepicker({
+        dateFormat: "yy-mm-dd",
+        showOtherMonths: true,
+        selectOtherMonths: true,
+        minDate: 0
+    });
+  } );
+$('#bank').on('select2:unselecting', function (e) {
+    $('#branch-code').val(null).trigger('change');
+    bank = $('#bank').val();
+    if (bank == '') {
+        bank = 'None'
+    }
+    $('#branch-code').attr('data-url','v1/realpay/bank/' + bank + '/branches');
+});
+$('#bank').on('select2:select', function (e) {
+    $('#branch-code').val(null).trigger('change');
+    bank = $('#bank').val();
+    if (bank == '') {
+        bank = 'None'
+    }
+    $('#branch-code').attr('data-url','v1/realpay/bank/' + bank + '/branches');
+});
+</script>

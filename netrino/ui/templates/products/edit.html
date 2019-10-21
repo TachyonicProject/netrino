@@ -23,12 +23,12 @@
     <table class="display" data-url="/v1/product/{{id}}&view=categories" data-endpoint="orchestration" width="100%">
         <thead>
             <th id='name'>Category</th>
-            <th data-confirm="Remove Category?" data-href="{{APP}}/products/rm-category" data-close width="2rem">
+            <th data-confirm="Remove Category?" data-table data-href="{{APP}}/products/rm-category" data-close-window=1 width="2rem">
                 <span data-feather="minus-square"></span>
             </th>
         </thead>
     </table>
-    <form id='category_form' data-datatable data-msg="Succesfully added Category" autocomplete="off" enctype="multipart/form-data" class="row" action="{{ APP }}/products/add-category/{{id}}">
+    <form id='category_form' data-table data-msg="Succesfully added Category" autocomplete="off" enctype="multipart/form-data" class="row" action="{{ APP }}/products/add-category/{{id}}">
         <div class="col-sm-5">
              <select id="add_category" name="category" data-id="name" data-url="/v1/products/categories" data-placeholder="" data-endpoint="orchestration" data-tags="true">
             </select>
@@ -40,12 +40,12 @@
     <table class="display" data-url="/v1/product/{{id}}&view=services" data-endpoint="orchestration" width="100%">
         <thead>
             <th id='entrypoint'>Service</th>
-            <th data-confirm="Remove Service?" data-href="{{APP}}/products/rm-service" data-close width="2rem">
+            <th data-confirm="Remove Service?" data-table data-href="{{APP}}/products/rm-service" data-close-window=1 width="2rem">
                 <span data-feather="minus-square"></span>
             </th>
         </thead>
     </table>
-        <form id='service_form' autocomplete="off" data-datatable action="{{ APP }}/products/add-service/{{id}}" enctype="multipart/form-data" class="row">
+        <form id='service_form' autocomplete="off" data-table action="{{ APP }}/products/add-service/{{id}}" enctype="multipart/form-data" class="row">
         <div class="col-sm-5">
              <select id="add_service" name="service" data-id="name" data-url="/v1/products/tasks" data-endpoint="orchestration" data-placeholder="Select Service">
             </select>
@@ -54,10 +54,54 @@
             <a href="{{ APP }}/products/add-service/{{id}}" data-form="service_form" class="btn btn-primary">Add Service</a>
         </div>
     </form>
+    <table class="display" data-url="/v1/product/{{id}}&view=attributes" data-endpoint="orchestration" width="100%">
+        <thead>
+            <th id='name'>Attribute Name</th>
+            <th id='value'>Attribute Value</th>
+            <th data-confirm="Remove Attribute?" data-table data-href="{{APP}}/products/rm-attr" data-close-window=1 width="2rem">
+                <span data-feather="minus-square"></span>
+            </th>
+        </thead>
+    </table>
+    <form id='attr_form' data-table data-msg="Succesfully added custom attribute" autocomplete="off" enctype="multipart/form-data" class="row" action="{{ APP }}/products/add-attr/{{id}}">
+        <div class="col-sm-4">
+             <select id="add_attribute_name" name="name" data-id="name" data-url="/v1/products/attributes" data-placeholder="" data-endpoint="orchestration" data-tags="true">
+            </select>
+        </div>
+        <div class="col-sm-4">
+             <input id="add_attribute_val" name="value" data-placeholder="" data-endpoint="orchestration" class="form-control">
+            </input>
+        </div>
+        <div class="col-sm-3">
+		  <input class="form-control btn btn-primary" type="submit" value="Add Attribute">
+	 </div>
+    </form>
+    <table class="display" data-url="/v1/product/{{id}}&view=payment_gateways" data-endpoint="orchestration" width="100%">
+        <thead>
+            <th id='name'>Payment Gateway Name</th>
+            <th id='description'>Description</th>
+            <th data-confirm="Remove Payment Gateway?" data-table data-href="{{APP}}/products/rm-pmt-gw" data-close-window=1 width="2rem">
+                <span data-feather="minus-square"></span>
+            </th>
+        </thead>
+    </table>
+    <form id='attr_form' data-table data-msg="Succesfully added Payment Gateway" autocomplete="off" enctype="multipart/form-data" class="row" action="{{ APP }}/products/add-pmt-gw/{{id}}">
+        <div class="col-sm-4">
+             <select id="add_pmt_gw_name" name="name" data-id="name" data-url="/v1/products/payment-gateways" data-placeholder="" data-endpoint="orchestration">
+            </select>
+        </div>
+        <div class="col-sm-4">
+             <input id="add_pmt_gw_desc" name="description" data-placeholder="" data-endpoint="orchestration" class="form-control">
+            </input>
+        </div>
+        <div class="col-sm-3">
+		  <input class="form-control btn btn-primary" type="submit" value="Add Payment Gateway">
+	 </div>
+    </form>
 {% endblock %}
 
 {% block buttons %}
     <a href="{{ APP }}/products/{{id}}" class="btn btn-default">Cancel</a>
-    <a data-confirm="Delete product?" data-close-window=2 href="{{ APP }}/products/delete/{{id}}" class="btn btn-danger">Delete</a>
+    <a data-confirm="Delete product?" data-close-window=2 data-table href="{{ APP }}/products/delete/{{id}}" class="btn btn-danger">Delete</a>
     <a href="{{ APP }}/products/edit/{{id}}" data-form="form" class="btn btn-primary">Update</a>
 {% endblock %}

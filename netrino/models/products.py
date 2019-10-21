@@ -67,7 +67,6 @@ class netrino_categories(SQLModel):
     product_category_ref = SQLModel.ForeignKey(product_id, netrino_product.id)
     primary_key = id
 
-
 @register.model()
 class netrino_product_entrypoint(SQLModel):
     id = SQLModel.Uuid(default=uuid4, internal=True)
@@ -77,6 +76,17 @@ class netrino_product_entrypoint(SQLModel):
     creation_time = SQLModel.DateTime(default=now, readonly=True)
     prod_entryp_ref = SQLModel.ForeignKey(product_id, netrino_product.id)
     unique_prod_entryp = SQLModel.UniqueIndex(product_id, entrypoint)
+    primary_key = id
+
+@register.model()
+class netrino_payment_gateway(SQLModel):
+    id = SQLModel.Uuid(default=uuid4, internal=True)
+    product_id = SQLModel.Uuid(null=False)
+    name = SQLModel.String(null=False)
+    description = SQLModel.MediumText()
+    creation_time = SQLModel.DateTime(default=now, readonly=True)
+    prod_paygw_ref = SQLModel.ForeignKey(product_id, netrino_product.id)
+    unique_prod_paygw = SQLModel.UniqueIndex(product_id, name)
     primary_key = id
 
 # @Vuader: Todo: Linked products: upsell and cross sell

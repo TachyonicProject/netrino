@@ -1,6 +1,6 @@
 {% extends "photonic/view.html" %}
 {% block content %}
-    Unfortunately your payment was declined.
+    Unfortunately your {% if 'debit_order' in result %}debit order request{% else %}payment{% endif %} was declined.
 
     <div style="padding: 10px"></div>
 

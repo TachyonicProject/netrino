@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Christiaan Frans Rademan.
+# Copyright (c) 2019 Dave Kruger.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,17 +27,22 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-from luxon import g
-
-import netrino.models
-
-import luxon.resources.wsgi.index
+from uuid import uuid4
 
 from luxon import register
-from psychokinetic.middleware.client import Client
-from psychokinetic.utils.gclient import gclient
+from luxon import SQLModel
+from luxon.utils.timezone import now
 
-gclient()
-register.middleware(Client)
+from netrino.models.products import netrino_product
 
-import netrino.views
+
+@register.model()
+class netrino_task(SQLModel):
+    id = SQLModel.Uuid(default=uuid4, internal=True)
+    time = SQLModel.DateTime(default=now)
+    name = SQLModel.String(null=False)
+    args = SQLModel.Json()
+    kwargs = SQLModel.Json()
+    state = SQLModel.String()
+    creation_time = SQLModel.DateTime(default=now, internal=True)
+    primary_key = id

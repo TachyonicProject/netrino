@@ -16,12 +16,14 @@ def sub_from_tenant(tenant_id, region):
     return subscriber['payload'][0]['id']
 
 
-def sub_from_order(order_id, metadata):
+def sub_from_order(order_id, metadata, api=None):
+    if api is None:
+        api = g.current_request.context.api
+
     region = metadata['region']
     package_id = metadata['package']
 
     url = '/v1/order/' + order_id
-    api = g.current_request.context.api
 
     api.collect_endpoints(region,
                           g.current_request.context_interface)
